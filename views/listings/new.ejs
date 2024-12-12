@@ -10,40 +10,40 @@
             <form action="/listings" method="post" class="needs-validation" novalidate>
                 <div class="mb-3">
                     <label for="title" class="form-label">Title</label>
-                    <input type="text" name="listing[title]" placeholder="Add a cachy title" class="form-control" required>
+                    <input type="text" id="title" name="listing[title]" placeholder="Add a cachy title" class="form-control" required>
                     <div class="invalid-feedback">Please provide a valid title. </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="description" class="form-label">Description</label>
-                    <textarea name="listing[description]" placeholder="Enter Description"
+                    <textarea id="description" name="listing[description]" placeholder="Enter Description"
                         class="form-control" required></textarea>
                         <div class="invalid-feedback">Please provide a short description. </div>
                 </div>
 
                 <div class="mb-3">
                     <label for="image" class="form-label">Image Link</label>
-                    <input type="text" name="listing[image]" placeholder="Paste image URL" class="form-control">
+                    <input type="text" id="image" name="listing[image]" placeholder="Paste image URL" class="form-control">
                 </div>
 
                 <div class="row">
 
                 <div class="mb-3 col-md-4">
                     <label for="price" class="form-label">Price</label>
-                    <input type="number" name="listing[price]" placeholder="1200" class="form-control" required>
+                    <input type="number" id="price" name="listing[price]" placeholder="1200" class="form-control" required>
                     <div class="invalid-feedback">Please provide a valid price. </div>
                 </div>
 
                 <div class="mb-3 col-md-8">
-                    <label for="" class="form-label">Country</label>
-                    <input type="text" name="listing[country]" placeholder="Bangladesh" class="form-control" required>
+                    <label for="country" class="form-label">Country</label>
+                    <input type="text" id="country" name="listing[country]" placeholder="Bangladesh" class="form-control" required>
                     <div class="invalid-feedback">Please provide a valid country. </div>
                 </div>
             </div>
 
                 <div class="mb-3">
                     <label for="location" class="form-label">Location</label>
-                    <input type="text" name="listing[location]" placeholder="Airport, Dhaka" class="form-control" required>
+                    <input type="text" id="location" name="listing[location]" placeholder="Airport, Dhaka" class="form-control" required>
                     <div class="invalid-feedback">Please provide a valid location. </div>
                     <br>
                 </div>
