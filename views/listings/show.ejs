@@ -9,12 +9,24 @@
     <div class="card col-6 offset-3 show-card listing-card">
       <img src="<%= listing.image %>" class="card-img-top show-img" alt="listing image" />
       <div class="card-body">
+        
         <p class="card-text mt-3">
-          <%= listing.description %> <br />
-            &#2547; <%= listing.price.toLocaleString("en-BN") %> <br />
-              <%= listing.location %> <br />
-                <%= listing.country %>
+          <i><%= listing.owner.username %></i>
         </p>
+
+        <p class="card-text">
+          <%= listing.description %>
+        </p>
+        <p class="card-text"></p>
+        &#2547; <%= listing.price.toLocaleString("en-BN") %> <br />
+          </p>
+          <p class="card-text">
+            <%= listing.location %>
+          </p>
+
+          <p class="card-text">
+            <%= listing.country %>
+          </p>
       </div>
     </div>
 
@@ -57,7 +69,8 @@
                 <%= review.rating %> Stars
               </p>
             </div>
-            <form class="mb-3" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE" method="post">
+            <form class="mb-3" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE"
+              method="post">
 
               <button class="btn btn-sm btn-dark">Delete</button>
             </form>
