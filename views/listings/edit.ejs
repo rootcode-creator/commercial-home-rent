@@ -8,7 +8,7 @@
                 
                 <h3>Edit your listing</h3>
 
-                <form action="/listings/<%= listing._id %>?_method=PUT" method="post" class="needs-validation" novalidate>
+                <form action="/listings/<%= listing._id %>?_method=PUT" method="post" class="needs-validation mb-5" novalidate enctype="multipart/form-data">
 
                     <div class="mb-3">
                         <label for="title" class="form-label">Title</label>
@@ -16,16 +16,20 @@
                         <div class="invalid-feedback">Title should be valid.</div>
                     </div>
 
-                    <div class="mb-3">
+                    <div class="mb-3 mt-3">
                         <label for="description" class="form-label">Description</label>
                         <textarea id="description" name="listing[description]" class="form-control" required><%= listing.description %></textarea>
-                        <div class="invalid-feedback">Provide a short description.</div>
+                        <div class="invalid-feedback">Enter a short description.</div>
                     </div>
 
                     <div class="mb-3">
-                        <label for="image" class="form-label">Image Link</label>
-                        <input type="text" id="image" name="listing[image]" value="<%= listing.image %>" class="form-control" required>
-                        <div class="invalid-feedback">Provide a valid link.</div>
+                        Orginal Listing Image <br>
+                        <img src="<%= orginalImageUrl %>" width="300" height="200">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="image" class="form-label">Upload New Image</label>
+                        <input type="file" id="image" name="listing[image]"  class="form-control" >
                     </div>
 
                     <div class="row">
@@ -56,8 +60,6 @@
                 
 
                     <button class="btn btn-dark edit-btn mt-3">Edit</button>
-
-                    <br><br>
 
                 </form>
 

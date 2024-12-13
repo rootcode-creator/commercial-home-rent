@@ -7,7 +7,7 @@
                 
             <h3>Create a new list</h3>
 
-            <form action="/listings" method="post" class="needs-validation" novalidate>
+            <form action="/listings" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
                 <div class="mb-3">
                     <label for="title" class="form-label">Title</label>
                     <input type="text" id="title" name="listing[title]" placeholder="Add a cachy title" class="form-control" required>
@@ -22,8 +22,8 @@
                 </div>
 
                 <div class="mb-3">
-                    <label for="image" class="form-label">Image Link</label>
-                    <input type="text" id="image" name="listing[image]" placeholder="Paste image URL" class="form-control">
+                    <label for="image" class="form-label">Upload Listing Image</label>
+                    <input type="file" id="image" name="listing[image]" class="form-control" required>
                 </div>
 
                 <div class="row">

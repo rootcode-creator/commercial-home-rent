@@ -119,11 +119,15 @@ body {
 .del-btn {
   background-color: #fe424d !important;
   border: none !important;
-  
 }
 
-.show-card{
-    padding-left: 0;
-    padding-right: 0;
-   
+.show-card {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+/* Map */
+#map {
+  height: 400px;
+  width: 120vh;
 }
