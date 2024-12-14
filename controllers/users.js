@@ -1,5 +1,9 @@
 const User = require("../models/user");
 
+//testing
+module.exports.root = (req, res) => {
+    res.redirect("/listings");
+};
 
 module.exports.renderSignUpForm = (req, res) => {
     res.render("users/signup.ejs");
