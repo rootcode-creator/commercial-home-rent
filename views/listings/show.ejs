@@ -17,21 +17,21 @@
       <div class="card-body">
         
         <p class="card-text mt-3">
-          <i><%= listing.owner.username %></i>
+         Owned by <b><i><%= listing.owner.username %></i></b>
         </p>
 
         <p class="card-text">
-          <%= listing.description %>
+          <i class="fa-solid fa-audio-description"></i> &nbsp; <%= listing.description %>
         </p>
-        <p class="card-text"></p>
-        &#2547; <%= listing.price.toLocaleString("en-BN") %> <br />
+        <p class="card-text">
+        &#2547; &nbsp; <%= listing.price.toLocaleString("en-BN") %> /night
           </p>
           <p class="card-text">
-            <%= listing.location %>
+            <i class="fa-solid fa-location-dot"></i> &nbsp; <%= listing.location %>
           </p>
 
           <p class="card-text">
-            <%= listing.country %>
+            <i class="fa-solid fa-flag"></i> &nbsp;<%= listing.country %>
           </p>
       </div>
     </div>
