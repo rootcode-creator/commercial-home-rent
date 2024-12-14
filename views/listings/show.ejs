@@ -39,10 +39,10 @@
     <% if (currUser && listing.owner._id.equals(currUser._id) ){ %>
 
     <div class="btns mb-5">
-      <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark col-1 offset-3">Edit</a>
+      <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark col-1 offset-3 small-screen">Edit</a>
 
       <form method="post" action="/listings/<%= listing._id %>?_method=DELETE">
-        <button class="btn btn-dark offset-5 del-btn">Delete</button>
+        <button class="btn btn-dark offset-5 del-btn small-screen">Delete</button>
       </form>
     </div>
 
@@ -91,11 +91,11 @@
 
 
       <% if (listing.reviews.length > 0) {%>
-      <div class="row mb-3">
+      <div class="row mb-3 ">
         <P> <b>All Reviews</b></P>
         <% for(review of listing.reviews){ %>
 
-          <div class="card col-5 ms-3 mb-3">
+          <div class="card col-lg-4 col-md-5 ms-3 mb-3 ">
             <div class="card-body">
               <h5 class="card-title">@<%= review.author.username %></h5>
               

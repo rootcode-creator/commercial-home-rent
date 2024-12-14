@@ -15,6 +15,11 @@ body {
   background-color: white;
 }
 
+.container-fluid{
+  background-color: white;
+
+}
+
 .fa-snowflake {
   color: #fe424d;
   font-size: 2rem;
@@ -160,6 +165,50 @@ body {
   width: 90vh;
 }
 
+@media (max-width: 850px){
+
+  #map {
+    height: 300px;
+    width: 70vh;
+  }
+}
+
+@media (max-width: 770px){
+
+  #map {
+    height: 300px;
+    width: 55vh;
+  }
+  .small-screen{
+    font-size: 1rem;
+    padding: 0.2rem;
+    width: 5rem;
+   }
+}
+
+
+@media (max-width: 500px){
+
+  #map {
+    height: 150px;
+    width: 27vh;
+  }
+  .card-text{
+    font-size: smaller;
+  }
+  h3{
+    font-size: 1rem;
+  }
+
+ .small-screen{
+  font-size: 0.7rem;
+  padding: 0.2rem;
+  width: 3rem;
+ }
+}
+
+
+
 
 /* Index Page */
 
@@ -193,16 +242,43 @@ body {
   border: 1px solid  black;
   border-radius: 1rem;
   height: 3.25rem;
-  padding: 1rem;
+  width: 10rem;
+  font-size: 0.8rem;
+  padding: 0.7rem;
   margin-left: 2rem;
   display:flex; 
-  align-items: center;
+  align-items:center;
+
+}
+
+
+@media (max-width: 1115px){
+
+  .unnecessary{
+    display:none
+  }
+}
+
+
+@media (max-width: 995px){
+
+  .less-necessary{
+    display:none
+  }
+}
+
+@media (max-width: 520px){
+
+  .necessary{
+    display:none
+  }
 }
 
 
 /* Log In and Sign Up Page */
 
 .login-header,.signup-header{
- padding-left: 200px;
+ padding-left: 4.8rem;
+ margin-bottom: 2rem;
 }
 
