@@ -1,39 +1,32 @@
-# 🏠 Commercial Home Rent System
+# 🛒 Wanderlust Ecommerce App
 
-A web application for managing commercial property rentals, developed and maintained by [rootcode-creator](https://github.com/rootcode-creator).
+An e-commerce web application for listing and renting properties, developed and maintained by [rootcode-creator](https://github.com/rootcode-creator). Inspired by Airbnb, built with Express and modern web technologies.
 
 ---
 
 ## 🌟 Overview
 
-This project streamlines the rental process for commercial homes and spaces, featuring property listings, tenant management, rental agreements, and administrative functionality—all via a user-friendly web interface.
+Wanderlust enables users to list, browse, and rent commercial or residential properties online. The platform features property management, secure authentication, and a seamless booking process—all through an intuitive web interface.
 
 ---
 
 ## 🛠️ Tech Stack
 
-**Programming Languages:**  
-Java, C, C++, PHP, Python, Arduino, HTML5, CSS3, SQL, JavaScript
-
-**Libraries/Frameworks:**  
-Sklearn, Pandas, Keras, Seaborn, Matplotlib, Scipy, Lime, Sharp, Bootstrap, Axios, ExpressJS, TensorFlow, JavaFX, Numpy, Typescript, JSwing, React, Material UI, Tailwind CSS
-
-**Tools / Platforms:**  
-Qiskit, Cisco, Linux, Excel, Hoppscotch, Postman, Nmap, Metasploit, Wireshark, Aircrack-ng, Hashcat, Ettercap, Fluxion, PowerPoint, Git, LaTeX, Word, REST API, Node.js, Kismet, Wifite, Wifiphisher, Adobe Illustrator, Networking Protocols, Adobe Premiere Pro, Raspberry Pi, ESP32, Mongoose, SIEM, Docker (basic), Cloud, Bash
-
-**Databases:**  
-MongoDB, MySQL
+- **Languages:** JavaScript, HTML5, CSS3
+- **Backend:** Express.js (Node.js)
+- **Frontend:** Bootstrap, EJS (Embedded JavaScript)
+- **Database:** MongoDB
 
 ---
 
 ## 🧩 Features
 
-- **Property Listings:** Add, view, and manage available commercial properties
-- **Tenant Registration:** Secure sign-up and management for tenants
-- **Rental Agreements:** Create, track, and manage rental contracts
-- **Admin Dashboard:** Oversee users, properties, and system settings
-- **Status Tracking:** Monitor rental statuses and payments
-- **Notification System:** Alerts for contract updates and payment reminders
+- **Property Listings:** Add, view, and manage property entries
+- **User Authentication:** Secure sign-up, login, and role-based access
+- **Booking System:** Rent properties and manage booking status
+- **Admin Dashboard:** Oversee users, properties, and transactions
+- **Responsive Design:** Mobile-friendly UI with Bootstrap
+- **Search & Filter:** Find properties by location, type, and availability
 
 ---
 
@@ -41,30 +34,39 @@ MongoDB, MySQL
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/rootcode-creator/commercial-home-rent.git
-    cd commercial-home-rent
+    git clone https://github.com/rootcode-creator/wanderlust-ecommerce-app.git
+    cd wanderlust-ecommerce-app
     ```
-2. **Set up the database:**
-    - Import the SQL file (if provided) into your MySQL server.
-    - Update database credentials in the PHP config file.
+2. **Install dependencies:**
+    ```bash
+    npm install
+    ```
+3. **Set up the database:**
+    - Ensure MongoDB is running locally or provide a remote URI.
+    - Update database credentials in the environment/config file.
 
-3. **Configure environment variables:**
-    - Edit settings such as database credentials in the configuration files.
+4. **Configure environment variables:**
+    - Create a `.env` file for sensitive credentials (DB URI, session secret, etc.).
 
-4. **Run the application:**
-    - Host the project in a PHP-supported web server (e.g., XAMPP, WAMP, LAMP).
-    - Access the web interface from your browser.
+5. **Run the application:**
+    ```bash
+    npm start
+    ```
+    - Access the web interface from your browser at [localhost:3000](http://localhost:3000).
 
 ---
 
 ## 📁 Project Structure
 
 ```
-commercial-home-rent/
-├── frontend/          # Frontend source code (HTML, CSS, JS)
-├── backend/           # Backend PHP scripts
-├── database/          # Database scripts or migrations
-├── docs/              # Documentation files
+wanderlust-ecommerce-app/
+├── models/            # Mongoose models
+├── routes/            # Express route handlers
+├── views/             # EJS templates
+├── public/            # Static assets (CSS, JS, images)
+├── controllers/       # Controller logic
+├── app.js             # Main application entry point
+├── .env               # Environment variables
 ├── README.md
 └── ...
 ```
@@ -89,5 +91,3 @@ MIT License
 ---
 
 **Maintainer:** [rootcode-creator](https://github.com/rootcode-creator)
-
-![image1](image1)
