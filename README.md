@@ -18,7 +18,7 @@ Modern, compact README tailored to the Express + EJS property-listing code in th
         - [Docker](#docker)
         - [From source (recommended)](#from-source-recommended)
 - **[Format selection & upload syntax](#format-selection--upload-syntax)**
-- **[JSON metadata example](#json-metadata-example)**
+- **[Database structure](#json-metadata-example)**
 - **[Contributing](#contributing)**
 - **[License](#license)**
 
