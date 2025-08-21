@@ -202,19 +202,19 @@ Mermaid flow (rendered on platforms that support Mermaid):
 
 ```mermaid
 flowchart TD
-    A[Client] --> B[Login / Signup]
-    B --> C[Auth success (session)]
+    A[Client] --> B[Login or Signup]
+    B --> C[Auth OK]
     C --> D[POST /listings]
     D --> E[Parse body]
     E --> F[Validate Joi]
     F --> G[Create listing]
-    G --> H[Save listing]
-    H --> I{Image provided?}
-    I -->|yes| J[Upload image]
-    I -->|no| L[Skip upload]
-    J --> K[Update listing (add image refs)]
+    G --> H[Persist listing]
+    H --> I{Image?}
+    I -->|Yes| J[Upload image]
+    I -->|No| L[Skip upload]
+    J --> K[Attach image refs]
     L --> K
-    K --> M[Respond to client]
+    K --> M[Respond]
 ```
 
 
