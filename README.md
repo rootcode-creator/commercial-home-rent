@@ -214,7 +214,7 @@ flowchart TD
         N --> F
         F --> G[Create listing]
         G --> H[Save listing]
-        H --> I[Upload image (optional)]
+        H --> I[Upload image optional]
         I --> J[Update listing]
         J --> K[Respond]
 ```
