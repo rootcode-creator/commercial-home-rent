@@ -213,9 +213,9 @@ flowchart TD
         M --> N[Auth success]
         N --> F
         F --> G[Create listing]
-        G --> H[Image upload]
-        H --> I[Save Mongoose]
-        I --> J[MongoDB]
+        G --> H[Save listing]
+        H --> I[Upload image (optional)]
+        I --> J[Update listing]
         J --> K[Respond]
 ```
 
