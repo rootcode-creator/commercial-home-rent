@@ -194,7 +194,7 @@ Review fields:
 - `review.rating` (number 1..5)
 - `review.comment` (string)
 
-Mermaid flow (updated: removed "Persist listing", added update + review path):
+Mermaid flow (updated: default image used when none uploaded):
 
 ```mermaid
 flowchart TD
@@ -203,12 +203,12 @@ flowchart TD
     C --> D[POST /listings]
     D --> E[Parse body]
     E --> F[Validate Joi]
-    F --> I{Image?}
+    F --> I{Image provided?}
     I -->|Yes| J[Upload image]
-    I -->|No| L[Skip upload]
-    J --> K[Attach image refs]
-    L --> K
+    J --> K[Attach uploaded image refs]
+    I -->|No| L[Use default image placeholder]
     K --> M[Listing created]
+    L --> M
     M --> N[PUT /listings/:id]
     N --> O[Check: exists?]
     O --> P{Owner & Auth?}
