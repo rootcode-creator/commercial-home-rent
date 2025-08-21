@@ -120,7 +120,7 @@ cd commercial-home-rent
 npm install
 node app.js
 # for development with auto-reload
-npx nodemon app.js
+nodemon app.js
 ```
 
 <a id="npm--node"></a>
