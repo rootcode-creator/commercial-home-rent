@@ -205,11 +205,11 @@ flowchart TD
     A[Client] --> B[Login or Signup]
     B --> C[Auth OK]
     C --> D[POST /listings]
-    D --> E[Parse body]
-    E --> F[Validate Joi]
-    F --> G[Create listing]
+    D --> G[Create listing]
     G --> H[Persist listing]
-    H --> I{Image?}
+    H --> E[Parse body]
+    E --> F[Validate Joi]
+    F --> I{Image?}
     I -->|Yes| J[Upload image]
     I -->|No| L[Skip upload]
     J --> K[Attach image refs]
