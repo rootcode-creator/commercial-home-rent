@@ -1,4 +1,3 @@
-## Install methods
 
 # commercial-home-rent — README
 
@@ -9,7 +8,8 @@
 Modern, compact README tailored to the Express + EJS property-listing code in this repository. Items marked [VERIFY] come from the source and should be confirmed before production use.
 
 
-## Table of contents
+
+## Table of Contents
 
 - [Project intro](#project-intro)
 - [Project structure](#project-structure)
@@ -17,26 +17,25 @@ Modern, compact README tailored to the Express + EJS property-listing code in th
 - [Features](#features)
 - [Tech stack](#tech-stack)
 - [Install methods](#install-methods)
-        - [From source (recommended)](#from-source-recommended)
         - [npm / Node](#npm--node)
-    
-- [Quick start](#quick-start)
+        - [Docker](#docker)
+        - [From source (recommended)](#from-source-recommended)
 - [Format selection & upload syntax](#format-selection--upload-syntax)
-
 - [JSON metadata example](#json-metadata-example)
 - [Contributing](#contributing)
-- [Roadmap](#roadmap)
 - [License](#license)
 
 
 
+<a id="project-intro"></a>
 ## 🚀 Project intro
 
 `commercial-home-rent` is a compact Express application that implements listings, reviews, and user authentication. It is intended as a learning or MVP foundation for property listing and renting functionality. The application uses server-side templates (EJS) and stores data in MongoDB.
 
 
 
-## 📁 Project Structure
+<a id="project-structure"></a>
+## 📁 Project structure
 
 ```
 wanderlust-ecommerce-app/
@@ -58,7 +57,8 @@ Key routes (based on `app.js`):
 - `/listings/:id/reviews` — reviews handled by `routes/review.js`
 
 
-## Differentiators
+<a id="differentiators"></a>
+## ⭐ Differentiators
 
 - Clear MVC-like separation (models/controllers/routes) in a small codebase.
 - `passport-local-mongoose` simplifies user model and authentication.
@@ -66,6 +66,7 @@ Key routes (based on `app.js`):
 - Cloudinary integration for image storage (optional).
 
 
+<a id="features"></a>
 ## 🔧 Features
 
 - Local user registration/login (Passport Local)
@@ -75,6 +76,7 @@ Key routes (based on `app.js`):
 - Flash messages and centralized error handling
 
 
+<a id="tech-stack"></a>
 ## 🧰 Tech stack
 
 - Node.js (see `package.json`. `engines` field contains Node 23.5.0 — prefer an LTS version in production) [VERIFY]
@@ -90,10 +92,12 @@ Key routes (based on `app.js`):
 
 
 
+<a id="install-methods"></a>
 ## ⚙️ Install methods
 
 This is a Node.js application. Pip/pipx are not applicable.
 
+<a id="from-source-recommended"></a>
 ### ▶ From source (recommended)
 
 ```powershell
@@ -105,10 +109,12 @@ node app.js
 npx nodemon app.js
 ```
 
+<a id="npm--node"></a>
 ### 📦 npm / Node
 
 Install via `npm install` and start with `node app.js`. Note: `package.json` contains other scripts (Vite) but the server runs from `app.js`.
 
+<a id="docker"></a>
 ### 🐳 Docker
 
 Example Dockerfile:
@@ -157,6 +163,7 @@ node app.js
 Note: `app.js` loads `.env` automatically when NODE_ENV != "production".
 
 
+<a id="format-selection--upload-syntax"></a>
 ## 🗂 Format selection & upload syntax
 
 - `schema.js` defines the expected request payload shapes for listings and reviews. Use it for JSON imports or form design.
@@ -196,6 +203,7 @@ flowchart TD
 ```
 
 
+<a id="json-metadata-example"></a>
 ## 🧾 JSON metadata example
 
 ```json
@@ -212,6 +220,7 @@ flowchart TD
 ```
 
 
+<a id="contributing"></a>
 ## 🤝 Contributing
 
 - Fork the repo, create a branch, open a PR.
@@ -220,6 +229,7 @@ flowchart TD
 
 
 
+<a id="license"></a>
 ## 📜 License
 
 MIT — add a `LICENSE` file to make this explicit.
