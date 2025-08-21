@@ -224,20 +224,71 @@ flowchart TD
 ```
 
 <a id="json-metadata-example"></a>
-## 🧾 JSON metadata example
+## 🗄️Database structure
 
+MongoDB collections and representative document shapes.
+
+### users collection
 ```json
 {
-  "listing": {
-    "title": "Downtown Retail Space",
-    "description": "1300 sqft, street-facing, high foot traffic",
-    "location": "123 Main St, Anytown",
-    "country": "USA",
-    "price": 3500,
-    "image": "https://res.cloudinary.com/yourcloud/image/upload/v12345/your-image.jpg"
-  }
+  "_id": "ObjectId",
+  "username": "string",
+  "email": "string",
+  "hash": "string",       // managed by passport-local-mongoose
+  "salt": "string",       // managed internally
+  "createdAt": "Date",
+  "updatedAt": "Date"
 }
 ```
+
+### listings collection
+```json
+{
+  "_id": "ObjectId",
+  "title": "string",
+  "description": "string",
+  "location": "string",
+  "country": "string",
+  "price": 3500,
+  "image": {
+    "url": "string",              // uploaded or default placeholder
+    "filename": "string"          // Cloudinary public_id (optional)
+  },
+  "owner": "ObjectId -> users._id",
+  "reviews": ["ObjectId -> reviews._id"],
+  "createdAt": "Date",
+  "updatedAt": "Date"
+}
+```
+
+### reviews collection
+```json
+{
+  "_id": "ObjectId",
+  "rating": 1,
+  "comment": "string",
+  "author": "ObjectId -> users._id",
+  "listing": "ObjectId -> listings._id",
+  "createdAt": "Date",
+  "updatedAt": "Date"
+}
+```
+
+### Relationships
+- listing.owner references users.
+- listing.reviews is an array of review ids.
+- review.author references users.
+- review.listing references listings.
+- Delete listing: cascade (manually) delete its reviews.
+- Delete user: decide whether to restrict if user owns listings/reviews (not automatic).
+
+### Index suggestions
+- users: { username: 1 } unique.
+- listings: { owner: 1, createdAt: -1 }.
+- reviews: { listing: 1, author: 1 } unique compound (enforces one review per user per listing).
+
+### Default image logic
+If no upload provided, set image.url to a constant (e.g. /images/default-listing.jpg) and image.filename to null.
 
 <a id="contributing"></a>
 ## 🤝 Contributing
