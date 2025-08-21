@@ -206,10 +206,13 @@ flowchart TD
         A[Client] --> B[POST listings]
         B --> C[Parse body]
         C --> D[Validate Joi]
-        D --> E{Auth?}
-        E -->|yes| F[isLoggedIn]
-        E -->|no| G[Listing create]
-        F --> G
+        D --> E{Logged in?}
+        E -->|yes| F[Proceed]
+        E -->|no| L[Redirect /login]
+        L --> M[Login form]
+        M --> N[Auth success]
+        N --> F
+        F --> G[Create listing]
         G --> H[Image upload]
         H --> I[Save Mongoose]
         I --> J[MongoDB]
