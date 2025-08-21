@@ -1,4 +1,3 @@
-
 # commercial-home-rent — README
 
 ![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
@@ -203,20 +202,19 @@ Mermaid flow (rendered on platforms that support Mermaid):
 
 ```mermaid
 flowchart TD
-        A[Client] --> B[POST listings]
-        B --> C[Parse body]
-        C --> D[Validate Joi]
-        D --> E{Logged in?}
-        E -->|yes| F[Proceed]
-        E -->|no| L[Redirect /login]
-        L --> M[Login form]
-        M --> N[Auth success]
-        N --> F
-        F --> G[Create listing]
-        G --> H[Save listing]
-        H --> I[Upload image optional]
-        I --> J[Update listing]
-        J --> K[Respond]
+    A[Client] --> B[Login / Signup]
+    B --> C[Auth success (session)]
+    C --> D[POST /listings]
+    D --> E[Parse body]
+    E --> F[Validate Joi]
+    F --> G[Create listing]
+    G --> H[Save listing]
+    H --> I{Image provided?}
+    I -->|yes| J[Upload image]
+    I -->|no| L[Skip upload]
+    J --> K[Update listing (add image refs)]
+    L --> K
+    K --> M[Respond to client]
 ```
 
 
