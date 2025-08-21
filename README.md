@@ -11,19 +11,19 @@ Modern, compact README tailored to the Express + EJS property-listing code in th
 
 ## Table of Contents
 
-- [Project intro](#project-intro)
-- [Project structure](#project-structure)
-- [Differentiators](#differentiators)
-- [Features](#features)
-- [Tech stack](#tech-stack)
-- [Install methods](#install-methods)
+- **[Project intro](#project-intro)**
+- **[Project structure](#project-structure)**
+- **[Differentiators](#differentiators)**
+- **[Features](#features)**
+- **[Tech stack](#tech-stack)**
+- **[Install methods](#install-methods)**
         - [npm / Node](#npm--node)
         - [Docker](#docker)
         - [From source (recommended)](#from-source-recommended)
-- [Format selection & upload syntax](#format-selection--upload-syntax)
-- [JSON metadata example](#json-metadata-example)
-- [Contributing](#contributing)
-- [License](#license)
+- **[Format selection & upload syntax](#format-selection--upload-syntax)**
+- **[JSON metadata example](#json-metadata-example)**
+- **[Contributing](#contributing)**
+- **[License](#license)**
 
 
 
@@ -69,11 +69,25 @@ Key routes (based on `app.js`):
 <a id="features"></a>
 ## 🔧 Features
 
-- Local user registration/login (Passport Local)
-- CRUD operations for listings
-- Create/delete reviews tied to listings
-- Session storage in MongoDB via `connect-mongo`
-- Flash messages and centralized error handling
+### Core features
+
+| Feature | Status | Notes |
+|---------|:------:|-------|
+| User registration & login | Current | Passport Local (session-based auth) |
+| Listings CRUD | Current | Create, read, update, delete listings |
+| Reviews (create/delete) | Current | Rating & comment linked to listings |
+| Session storage (MongoDB) | Current | `connect-mongo` |
+| Flash messages & error handling | Current | Centralized Express error middleware |
+| Cloud image uploads | Current | Multer + Cloudinary (optional) |
+
+### Extended / Optional
+
+| Feature | Status | Notes |
+|---------|:------:|-------|
+| Docker support | Example | Sample Dockerfile included |
+| Payments | Future | Stripe / PayPal integration planned |
+| Favorites / Wishlists | Future | User personalization |
+| Reviews & Ratings enhancements | Future | Owner / renter feedback workflow |
 
 
 <a id="tech-stack"></a>
