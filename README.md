@@ -203,17 +203,17 @@ Mermaid flow (rendered on platforms that support Mermaid):
 
 ```mermaid
 flowchart TD
-        A[Client Browser] --> B[POST /listings]
-        B --> C[Middleware: body parser & methodOverride]
-        C --> D[Joi validation]
-        D --> E{Auth required?}
-        E -- yes --> F[isLoggedIn middleware]
-        E -- no --> G[Controller: listing.create]
+        A[Client] --> B[POST listings]
+        B --> C[Parse body]
+        C --> D[Validate Joi]
+        D --> E{Auth?}
+        E -->|yes| F[isLoggedIn]
+        E -->|no| G[Listing create]
         F --> G
-        G --> H[Multer + Cloudinary (optional)]
-        H --> I[Mongoose save]
-        I --> J[MongoDB Atlas]
-        J --> K[Render / redirect]
+        G --> H[Image upload]
+        H --> I[Save Mongoose]
+        I --> J[MongoDB]
+        J --> K[Respond]
 ```
 
 
