@@ -17,8 +17,8 @@ Modern, compact README tailored to the Express + EJS property-listing code in th
 - [Features](#features)
 - [Tech stack](#tech-stack)
 - [Install methods](#install-methods)
-    - [From source (recommended)](#from-source-recommended)
-    - [npm / Node](#npm--node)
+        - [From source (recommended)](#from-source-recommended)
+        - [npm / Node](#npm--node)
     
 - [Quick start](#quick-start)
 - [Format selection & upload syntax](#format-selection--upload-syntax)
