@@ -14,9 +14,9 @@ Modern, compact README tailored to the Express + EJS property-listing code in th
 - **[Features](#features)**
 - **[Tech stack](#tech-stack)**
 - **[Install methods](#install-methods)**
-        - [npm / Node](#npm--node)
-        - [Docker](#docker)
-        - [From source (recommended)](#from-source-recommended)
+  - [npm / Node](#npm--node)
+  - [Docker](#docker)
+  - [From source (recommended)](#from-source-recommended)
 - **[Format selection & upload syntax](#format-selection--upload-syntax)**
 - **[Database structure](#json-metadata-example)**
 - **[Contributing](#contributing)**
