@@ -140,6 +140,7 @@ npm install
 node app.js
 # for development with auto-reload
 nodemon app.js
+```
 
 
 <a id="docker"></a>
