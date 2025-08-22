@@ -164,13 +164,7 @@ CLOUD_API_SECRET=...
 MAP_TOKEN=... # optional
 ```
 
-Install and run:
 
-```powershell
-npm install
-node app.js
-# open http://localhost:8080
-```
 
 Note: `app.js` loads `.env` automatically when NODE_ENV != "production".
 
