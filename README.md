@@ -113,19 +113,7 @@ Update (PUT/PATCH) is permitted only if all conditions hold:
 
 This is a Node.js application. Pip/pipx are not applicable.
 
-<a id="from-source-recommended"></a>
-### ▶ From source (recommended)
 
-Install via `npm install` and start with `node app.js`. Note: `package.json` contains other scripts (Vite) but the server runs from `app.js`.
-
-```powershell
-git clone <repo-url> commercial-home-rent
-cd commercial-home-rent
-npm install
-node app.js
-# for development with auto-reload
-nodemon app.js
-```
 
 <a id="npm--node"></a>
 ### 📦 npm / Node
