@@ -51,10 +51,20 @@ module.exports.index = async (req, res) => {
 
     conditions.push({
       $or: [
-        { title: { $regex: categoryPattern, $options: "i" } },
-        { location: { $regex: categoryPattern, $options: "i" } },
-        { country: { $regex: categoryPattern, $options: "i" } },
-        { description: { $regex: categoryPattern, $options: "i" } },
+        { category: selectedCategory },
+        {
+          $and: [
+            { $or: [{ category: { $exists: false } }, { category: null }, { category: "" }] },
+            {
+              $or: [
+                { title: { $regex: categoryPattern, $options: "i" } },
+                { location: { $regex: categoryPattern, $options: "i" } },
+                { country: { $regex: categoryPattern, $options: "i" } },
+                { description: { $regex: categoryPattern, $options: "i" } },
+              ],
+            },
+          ],
+        },
       ],
     });
   }

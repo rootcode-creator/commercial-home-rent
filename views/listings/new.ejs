@@ -34,10 +34,25 @@
                     <div class="invalid-feedback">Please provide a valid price. </div>
                 </div>
 
-                <div class="mb-3 col-md-8">
+                <div class="mb-3 col-md-4">
                     <label for="country" class="form-label">Country</label>
                     <input type="text" id="country" name="listing[country]" placeholder="Bangladesh" class="form-control" required>
                     <div class="invalid-feedback">Please provide a valid country. </div>
+                </div>
+
+                <div class="mb-3 col-md-4">
+                    <label for="category" class="form-label">Category</label>
+                    <select id="category" name="listing[category]" class="form-select" required>
+                        <option value="rooms">Rooms</option>
+                        <option value="iconic-cities">Iconic Cities</option>
+                        <option value="mountains">Mountains</option>
+                        <option value="castle">Castle</option>
+                        <option value="amazing-pools">Amazing Pools</option>
+                        <option value="camping">Camping</option>
+                        <option value="dome">Dome</option>
+                        <option value="boats">Boats</option>
+                    </select>
+                    <div class="invalid-feedback">Please choose a category.</div>
                 </div>
             </div>
 

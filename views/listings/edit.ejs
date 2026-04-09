@@ -41,11 +41,26 @@
 
                     </div>
 
-                    <div class="mb-3 col-md-8">
+                    <div class="mb-3 col-md-4">
                         <label for="country" class="form-label">Country</label>
                         <input type="text" id="country" name="listing[country]" value="<%= listing.country %>" class="form-control" required>
                         <div class="invalid-feedback">Country should be valid.</div>
 
+                    </div>
+
+                    <div class="mb-3 col-md-4">
+                        <label for="category" class="form-label">Category</label>
+                        <select id="category" name="listing[category]" class="form-select" required>
+                            <option value="rooms" <%= listing.category === 'rooms' ? 'selected' : '' %>>Rooms</option>
+                            <option value="iconic-cities" <%= listing.category === 'iconic-cities' ? 'selected' : '' %>>Iconic Cities</option>
+                            <option value="mountains" <%= listing.category === 'mountains' ? 'selected' : '' %>>Mountains</option>
+                            <option value="castle" <%= listing.category === 'castle' ? 'selected' : '' %>>Castle</option>
+                            <option value="amazing-pools" <%= listing.category === 'amazing-pools' ? 'selected' : '' %>>Amazing Pools</option>
+                            <option value="camping" <%= listing.category === 'camping' ? 'selected' : '' %>>Camping</option>
+                            <option value="dome" <%= listing.category === 'dome' ? 'selected' : '' %>>Dome</option>
+                            <option value="boats" <%= listing.category === 'boats' ? 'selected' : '' %>>Boats</option>
+                        </select>
+                        <div class="invalid-feedback">Please choose a category.</div>
                     </div>
 
                 </div>
