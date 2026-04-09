@@ -83,6 +83,13 @@
 
   <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1 mb-5 mt-3">
 
+    <% if (searchQuery && allListings.length === 0) { %>
+      <div class="col-12 text-center mt-4">
+        <h5>No listings found for "<%= searchQuery %>"</h5>
+        <a href="/listings" class="btn btn-outline-dark mt-2">Clear search</a>
+      </div>
+    <% } %>
+
     <% for(let listing of allListings){ %>
 
       <a href="/listings/<%= listing._id %>/" class="listing-link">
