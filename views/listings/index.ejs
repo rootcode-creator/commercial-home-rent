@@ -105,11 +105,11 @@
     <div class="filter-status-row mb-2 mt-3">
       <div class="filter-status">
         <% if (selectedCategory && searchQuery) { %>
-          Showing <b><%= selectedCategoryLabel %></b> listings for "<%= searchQuery %>"
+          Listings: <b><%= selectedCategory %></b> for "<%= searchQuery %>"
         <% } else if (selectedCategory) { %>
-          Showing <b><%= selectedCategoryLabel %></b> listings
+          Listings: <b><%= selectedCategory %></b>
         <% } else { %>
-          Showing results for "<%= searchQuery %>"
+          Results for "<%= searchQuery %>"
         <% } %>
       </div>
 
