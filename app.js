@@ -26,6 +26,13 @@ const userRouter = require("./routes/user.js");
 
 // const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
 const dbUrl = process.env.ATLASDB_URL;
+const sessionSecret = process.env.SECRET || "development-secret";
+const sessionCollectionName = process.env.SESSION_COLLECTION || "sessions_v2";
+const isServerlessRuntime =
+  process.env.VERCEL === "1" ||
+  !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+const useMongoSessionStore =
+  process.env.USE_MONGO_SESSION === "true" && !isServerlessRuntime;
 
 main()
   .then(() => {
@@ -75,21 +82,27 @@ app.use((req, res, next) => {
 });
 
 
-const store = MongoStore.create({
-  mongoUrl: dbUrl,
-  crypto: {
-    secret: process.env.SECRET,
-  },
-  touchAfter: 24 * 3600,
-});
+let store;
+if (useMongoSessionStore) {
+  try {
+    const storeOptions = {
+      mongoUrl: dbUrl,
+      collectionName: sessionCollectionName,
+      touchAfter: 24 * 3600,
+    };
 
-store.on("error", (err) => {
-  console.log("Error in MONGO SESSION STORE", err);
-});
+    store = MongoStore.create(storeOptions);
+
+    store.on("error", (err) => {
+      console.log("Error in MONGO SESSION STORE", err);
+    });
+  } catch (err) {
+    console.log("Falling back to MemoryStore", err);
+  }
+}
 
 const sessionOptions = {
-  store,
-  secret: process.env.SECRET,
+  secret: sessionSecret,
   resave: false,
   saveUninitialized: true,
   cookie:{
@@ -98,6 +111,10 @@ const sessionOptions = {
     httpOnly: true,
   },
 };
+
+if (store) {
+  sessionOptions.store = store;
+}
 
 
 
