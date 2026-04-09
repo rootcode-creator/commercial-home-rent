@@ -5,24 +5,69 @@ const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 
 const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+const categoryKeywords = {
+  rooms: ["room", "bedroom", "suite", "apartment", "studio"],
+  "iconic-cities": ["city", "downtown", "urban", "metropolitan"],
+  mountains: ["mountain", "hill", "valley", "peak"],
+  castle: ["castle", "fort", "palace", "heritage"],
+  "amazing-pools": ["pool", "swimming", "infinity pool"],
+  camping: ["camp", "camping", "tent", "forest"],
+  dome: ["dome", "igloo", "geodesic"],
+  boats: ["boat", "yacht", "ship", "houseboat"],
+};
+
+const categoryLabels = {
+  rooms: "Rooms",
+  "iconic-cities": "Iconic Cities",
+  mountains: "Mountains",
+  castle: "Castle",
+  "amazing-pools": "Amazing Pools",
+  camping: "Camping",
+  dome: "Dome",
+  boats: "Boats",
+};
+
 module.exports.index = async (req, res) => {
   const searchQuery = req.query.q?.trim() || "";
-  let filter = {};
+  const selectedCategory = req.query.category?.trim().toLowerCase() || "";
+  const conditions = [];
 
   if (searchQuery) {
     const safeQuery = escapeRegex(searchQuery);
-    filter = {
+    conditions.push({
       $or: [
         { title: { $regex: safeQuery, $options: "i" } },
         { location: { $regex: safeQuery, $options: "i" } },
         { country: { $regex: safeQuery, $options: "i" } },
         { description: { $regex: safeQuery, $options: "i" } },
       ],
-    };
+    });
   }
 
+  if (selectedCategory && categoryKeywords[selectedCategory]) {
+    const categoryPattern = categoryKeywords[selectedCategory]
+      .map((keyword) => escapeRegex(keyword))
+      .join("|");
+
+    conditions.push({
+      $or: [
+        { title: { $regex: categoryPattern, $options: "i" } },
+        { location: { $regex: categoryPattern, $options: "i" } },
+        { country: { $regex: categoryPattern, $options: "i" } },
+        { description: { $regex: categoryPattern, $options: "i" } },
+      ],
+    });
+  }
+
+  const filter = conditions.length > 0 ? { $and: conditions } : {};
   let allListings = await Listing.find(filter);
-  return res.render("listings/index.ejs", { allListings, searchQuery });
+
+  return res.render("listings/index.ejs", {
+    allListings,
+    searchQuery,
+    selectedCategory,
+    selectedCategoryLabel: categoryLabels[selectedCategory] || "",
+  });
 };
 
 module.exports.renderNewForm = (req, res) => {

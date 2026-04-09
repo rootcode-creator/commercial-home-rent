@@ -3,72 +3,92 @@
 
   <div id="filters" class="navbar" >
 
-    <div class="filter ">
-      <div>
-        <i class="fa-solid fa-fire"></i>
-      </div>
-      <p>Trending</p>
-    </div>
+    <% const querySuffix = searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""; %>
 
-    <div class="filter unnecessary less-necessary necessary">
-      <div>
-        <i class="fa-solid fa-bed"></i>
+    <a href="/listings<%= searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : "" %>" class="filter-link">
+      <div class="filter <%= !selectedCategory ? 'active-filter' : '' %>">
+        <div>
+          <i class="fa-solid fa-fire"></i>
+        </div>
+        <p>Trending</p>
       </div>
-      <p>Rooms</p>
-    </div>
+    </a>
 
-    <div class="filter necessary">
-      <div>
-        <i class="fa-solid fa-mountain-city"></i>
+    <a href="/listings?category=rooms<%- querySuffix %>" class="filter-link">
+      <div class="filter unnecessary less-necessary necessary <%= selectedCategory === 'rooms' ? 'active-filter' : '' %>">
+        <div>
+          <i class="fa-solid fa-bed"></i>
+        </div>
+        <p>Rooms</p>
       </div>
-      <p>Iconic Cities</p>
-    </div>
+    </a>
 
-    <div class="filter necessary">
-      <div>
-        <i class="fa-solid fa-mountain"></i>
+    <a href="/listings?category=iconic-cities<%- querySuffix %>" class="filter-link">
+      <div class="filter necessary <%= selectedCategory === 'iconic-cities' ? 'active-filter' : '' %>">
+        <div>
+          <i class="fa-solid fa-mountain-city"></i>
+        </div>
+        <p>Iconic Cities</p>
       </div>
-      <p>Mountains</p>
-    </div>
+    </a>
 
-    <div class="filter unnecessary less-necessary necessary">
-      <div>
-        <i class="fa-brands fa-fort-awesome"></i>
+    <a href="/listings?category=mountains<%- querySuffix %>" class="filter-link">
+      <div class="filter necessary <%= selectedCategory === 'mountains' ? 'active-filter' : '' %>">
+        <div>
+          <i class="fa-solid fa-mountain"></i>
+        </div>
+        <p>Mountains</p>
       </div>
-      <p>Castle</p>
-    </div>
+    </a>
 
-    <div class="filter less-necessary necessary">
-      <div>
-        <i class="fa-solid fa-person-swimming"></i>
+    <a href="/listings?category=castle<%- querySuffix %>" class="filter-link">
+      <div class="filter unnecessary less-necessary necessary <%= selectedCategory === 'castle' ? 'active-filter' : '' %>">
+        <div>
+          <i class="fa-brands fa-fort-awesome"></i>
+        </div>
+        <p>Castle</p>
       </div>
-      <p>Amaizing Pools</p>
-    </div>
+    </a>
 
-
-    <div class="filter less-necessary necessary">
-      <div>
-        <i class="fa-solid fa-campground"></i>
+    <a href="/listings?category=amazing-pools<%- querySuffix %>" class="filter-link">
+      <div class="filter less-necessary necessary <%= selectedCategory === 'amazing-pools' ? 'active-filter' : '' %>">
+        <div>
+          <i class="fa-solid fa-person-swimming"></i>
+        </div>
+        <p>Amaizing Pools</p>
       </div>
-      <p>Camping</p>
-    </div>
+    </a>
+
+
+    <a href="/listings?category=camping<%- querySuffix %>" class="filter-link">
+      <div class="filter less-necessary necessary <%= selectedCategory === 'camping' ? 'active-filter' : '' %>">
+        <div>
+          <i class="fa-solid fa-campground"></i>
+        </div>
+        <p>Camping</p>
+      </div>
+    </a>
 
   
 
-    <div class="filter unnecessary less-necessary necessary">
-      <div>
-        <i class="fa-solid fa-igloo"></i>
+    <a href="/listings?category=dome<%- querySuffix %>" class="filter-link">
+      <div class="filter unnecessary less-necessary necessary <%= selectedCategory === 'dome' ? 'active-filter' : '' %>">
+        <div>
+          <i class="fa-solid fa-igloo"></i>
+        </div>
+        <p>Dome</p>
       </div>
-      <p>Dome</p>
-    </div>
+    </a>
 
 
-    <div class="filter less-necessary necessary">
-      <div>
-        <i class="fa-solid fa-ship"></i>
+    <a href="/listings?category=boats<%- querySuffix %>" class="filter-link">
+      <div class="filter less-necessary necessary <%= selectedCategory === 'boats' ? 'active-filter' : '' %>">
+        <div>
+          <i class="fa-solid fa-ship"></i>
+        </div>
+        <p>Boats</p>
       </div>
-      <p>Boats</p>
-    </div>
+    </a>
     
 
     <div class="tax-toggle">
@@ -81,11 +101,29 @@
   </div>
 
 
+  <% if (selectedCategory || searchQuery) { %>
+    <div class="filter-status mb-2 mt-3">
+      <% if (selectedCategory && searchQuery) { %>
+        Showing <b><%= selectedCategoryLabel %></b> listings for "<%= searchQuery %>"
+      <% } else if (selectedCategory) { %>
+        Showing <b><%= selectedCategoryLabel %></b> listings
+      <% } else { %>
+        Showing results for "<%= searchQuery %>"
+      <% } %>
+    </div>
+  <% } %>
+
   <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1 mb-5 mt-3">
 
-    <% if (searchQuery && allListings.length === 0) { %>
+    <% if ((searchQuery || selectedCategory) && allListings.length === 0) { %>
       <div class="col-12 text-center mt-4">
-        <h5>No listings found for "<%= searchQuery %>"</h5>
+        <% if (selectedCategory && searchQuery) { %>
+          <h5>No listings found for "<%= searchQuery %>" in <%= selectedCategoryLabel %>.</h5>
+        <% } else if (selectedCategory) { %>
+          <h5>No listings found in <%= selectedCategoryLabel %>.</h5>
+        <% } else { %>
+          <h5>No listings found for "<%= searchQuery %>"</h5>
+        <% } %>
         <a href="/listings" class="btn btn-outline-dark mt-2">Clear search</a>
       </div>
     <% } %>
