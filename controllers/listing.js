@@ -67,6 +67,7 @@ module.exports.index = async (req, res) => {
     searchQuery,
     selectedCategory,
     selectedCategoryLabel: categoryLabels[selectedCategory] || "",
+    selectedCategoryCount: selectedCategory ? allListings.length : null,
   });
 };
 

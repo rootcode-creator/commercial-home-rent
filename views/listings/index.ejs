@@ -102,13 +102,21 @@
 
 
   <% if (selectedCategory || searchQuery) { %>
-    <div class="filter-status mb-2 mt-3">
-      <% if (selectedCategory && searchQuery) { %>
-        Showing <b><%= selectedCategoryLabel %></b> listings for "<%= searchQuery %>"
-      <% } else if (selectedCategory) { %>
-        Showing <b><%= selectedCategoryLabel %></b> listings
-      <% } else { %>
-        Showing results for "<%= searchQuery %>"
+    <div class="filter-status-row mb-2 mt-3">
+      <div class="filter-status">
+        <% if (selectedCategory && searchQuery) { %>
+          Showing <b><%= selectedCategoryLabel %></b> listings for "<%= searchQuery %>"
+        <% } else if (selectedCategory) { %>
+          Showing <b><%= selectedCategoryLabel %></b> listings
+        <% } else { %>
+          Showing results for "<%= searchQuery %>"
+        <% } %>
+      </div>
+
+      <% if (selectedCategory) { %>
+        <div class="category-count">
+          <b><%= selectedCategoryCount %></b> <%= selectedCategoryCount === 1 ? 'listing' : 'listings' %>
+        </div>
       <% } %>
     </div>
   <% } %>
