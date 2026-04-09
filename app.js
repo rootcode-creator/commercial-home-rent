@@ -16,7 +16,7 @@ const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
-const port = 8080;
+const port = process.env.PORT || 8080;
 
 
 const listingRouter = require("./routes/listing.js");
@@ -105,6 +105,10 @@ app.use( (err, req, res, next) => {
   // res.status(statusCode).send(message);
 });
 
-app.listen(port, () => {
-  console.log(`Server started on port ${port}`);
-});
+if (process.env.VERCEL !== "1") {
+  app.listen(port, () => {
+    console.log(`Server started on port ${port}`);
+  });
+}
+
+module.exports = app;
