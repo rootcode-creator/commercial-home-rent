@@ -1,8 +1,23 @@
-# commercial-home-rent — README
+<div align="center">
 
-![license](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
-![node](https://img.shields.io/badge/node-%3E%3D18-brightgreen?style=flat-square)
-![status](https://img.shields.io/badge/status-development-yellow?style=flat-square)
+## commercial-home-rent
+
+Property listing and rental platform powered by Express.js, MongoDB, EJS, Passport, and Cloudinary.
+
+![Version](https://img.shields.io/static/v1?style=for-the-badge&label=VERSION&message=1.0.0&labelColor=7A1F2B&color=E11D48)
+![License](https://img.shields.io/static/v1?style=for-the-badge&label=LICENSE&message=ISC&labelColor=14532D&color=84CC16)
+![Type](https://img.shields.io/static/v1?style=for-the-badge&label=TYPE&message=RENTAL%20PLATFORM&labelColor=4C1D95&color=8B5CF6)
+
+![Node.js](https://img.shields.io/static/v1?style=for-the-badge&label=NODE.JS&message=24.X&logo=nodedotjs&logoColor=white&labelColor=0F766E&color=14B8A6)
+![Express](https://img.shields.io/static/v1?style=for-the-badge&label=EXPRESS&message=4.21.1&logo=express&logoColor=white&labelColor=0E7490&color=06B6D4)
+![MongoDB](https://img.shields.io/static/v1?style=for-the-badge&label=MONGODB&message=8.9.5&logo=mongodb&logoColor=white&labelColor=1D4ED8&color=3B82F6)
+![EJS](https://img.shields.io/static/v1?style=for-the-badge&label=EJS&message=TEMPLATES&labelColor=1E40AF&color=38BDF8)
+
+![Passport](https://img.shields.io/static/v1?style=for-the-badge&label=PASSPORT&message=AUTH&logo=passport&logoColor=white&labelColor=5B21B6&color=7C3AED)
+![Cloudinary](https://img.shields.io/static/v1?style=for-the-badge&label=CLOUDINARY&message=MEDIA&logo=cloudinary&logoColor=white&labelColor=6D28D9&color=8B5CF6)
+![Mapbox](https://img.shields.io/static/v1?style=for-the-badge&label=MAPBOX&message=MAPS&logo=mapbox&logoColor=white&labelColor=4338CA&color=6366F1)
+
+</div>
 
 Modern, compact README tailored to the Express + EJS property-listing code in this repository. Items marked [VERIFY] come from the source and should be confirmed before production use.
 
