@@ -5,6 +5,7 @@ const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const PDFDocument = require('pdfkit');
 const mapToken = process.env.MAP_TOKEN;
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 
@@ -30,6 +31,115 @@ const categoryLabels = {
   camping: "Camping",
   dome: "Dome",
   boats: "Boats",
+};
+
+const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
+  const tmpPath = path.join(os.tmpdir(), `receipt-${sessionId}-${Date.now()}.pdf`);
+  const doc = new PDFDocument({ size: 'A4', margin: 48 });
+  const stream = fs.createWriteStream(tmpPath);
+
+  const currency = String(record.originalCurrency || record.localCurrency || record.currency || 'USD').toUpperCase();
+  const totalValue = record.originalAmountTotal ?? record.localAmountTotal ?? record.amountTotal ?? 0;
+  const subtotal = Number(totalValue || 0);
+  const tax = 0;
+  const paymentMethod = Array.isArray(record.paymentMethodTypes) && record.paymentMethodTypes.length > 0
+    ? record.paymentMethodTypes[0]
+    : 'card';
+  const bookingDays = record.bookingDays || 1;
+  const reservedAt = record.reservationDate ? new Date(record.reservationDate).toLocaleString() : '';
+
+  const waitForFinish = new Promise((resolve, reject) => {
+    stream.on('finish', resolve);
+    stream.on('error', reject);
+  });
+
+  doc.pipe(stream);
+  doc.rect(0, 0, doc.page.width, 14).fill('#22c55e');
+  doc.moveDown(2);
+  doc.fillColor('#15803d').fontSize(12).text('Payment successful', { align: 'center' });
+  doc.moveDown(0.5);
+  doc.fillColor('#111827').fontSize(24).font('Helvetica-Bold').text('Booking Receipt', { align: 'center' });
+  doc.moveDown(0.5);
+  doc.font('Helvetica').fontSize(11).fillColor('#4b5563').text('Your payment has been received and the booking is confirmed.', { align: 'center' });
+
+  doc.moveDown(1.5);
+  doc.roundedRect(48, doc.y, 499, 72, 10).fillAndStroke('#dcfce7', '#86efac');
+  doc.fillColor('#14532d').fontSize(12).font('Helvetica-Bold').text('Booking summary', 64, doc.y + 14);
+  doc.font('Helvetica').fillColor('#14532d').fontSize(11);
+  doc.text(`Listing: ${record.listingTitle || listing?.title || 'Booked listing'}`, 64, doc.y + 8);
+  doc.text(`Location: ${record.listingLocation || listing?.location || ''}${record.listingCountry || listing?.country ? `, ${record.listingCountry || listing?.country}` : ''}`, 64, doc.y + 4);
+
+  const rowTop = doc.y + 18;
+  const rows = [
+    ['Booking ID', record.sessionId || record.paymentIntentId || ''],
+    ['Days', String(bookingDays)],
+    ['Reservation date', reservedAt],
+    ['Payment method', paymentMethod],
+  ];
+
+  doc.moveTo(48, rowTop + 8).lineTo(547, rowTop + 8).stroke('#e5e7eb');
+  let rowY = rowTop + 18;
+  rows.forEach(([label, value], index) => {
+    doc.fillColor('#6b7280').font('Helvetica-Bold').fontSize(10).text(label, 64, rowY + index * 22);
+    doc.fillColor('#111827').font('Helvetica').fontSize(10).text(String(value || '-'), 300, rowY + index * 22, { width: 232, align: 'right' });
+  });
+
+  const amountTop = rowY + rows.length * 22 + 18;
+  doc.roundedRect(48, amountTop, 499, 102, 10).fillAndStroke('#f0fdf4', '#bbf7d0');
+  doc.fillColor('#14532d').font('Helvetica-Bold').fontSize(12).text('Receipt', 64, amountTop + 14);
+  doc.fillColor('#14532d').font('Helvetica').fontSize(11);
+  doc.text(`Subtotal`, 64, amountTop + 40);
+  doc.text(`${currency} ${subtotal.toFixed(2)}`, 440, amountTop + 40, { width: 92, align: 'right' });
+  doc.text(`Tax / GST`, 64, amountTop + 58);
+  doc.text(`${currency} ${tax.toFixed(2)}`, 440, amountTop + 58, { width: 92, align: 'right' });
+  doc.moveTo(64, amountTop + 76).lineTo(533, amountTop + 76).stroke('#bbf7d0');
+  doc.font('Helvetica-Bold').text('Total paid', 64, amountTop + 84);
+  doc.text(`${currency} ${subtotal.toFixed(2)}`, 440, amountTop + 84, { width: 92, align: 'right' });
+
+  doc.moveDown(9);
+  doc.fillColor('#6b7280').font('Helvetica').fontSize(10).text('You can view and manage your booking from your reservations page.', { align: 'left' });
+  doc.moveDown(0.5);
+  doc.fillColor('#111827').fontSize(10).text(`${process.env.APP_ORIGIN || ''}/listings/reservations`, { underline: true });
+
+  doc.moveDown(2);
+  doc.fillColor('#6b7280').fontSize(9).text('Wanderlust Private Limited', { align: 'center' });
+
+  doc.end();
+  await waitForFinish;
+  return tmpPath;
+};
+
+const streamPdfFile = async (res, tmpPath, sessionId) => {
+  const stat = await fs.promises.stat(tmpPath);
+
+  if (!stat.size || stat.size < 500) {
+    try {
+      await fs.promises.unlink(tmpPath);
+    } catch (e) {
+      /* ignore */
+    }
+    res.status(500).type('text/plain').send('PDF generation failed (empty or corrupted).');
+    return false;
+  }
+
+  res.set({
+    'Content-Type': 'application/pdf',
+    'Content-Disposition': `attachment; filename=receipt-${sessionId}.pdf`,
+    'Content-Length': stat.size,
+  });
+
+  const stream = fs.createReadStream(tmpPath);
+  stream.pipe(res);
+  stream.on('close', async () => {
+    try { await fs.promises.unlink(tmpPath); } catch (e) { /* ignore */ }
+  });
+  stream.on('error', async (err) => {
+    console.error('Stream error serving PDF:', err);
+    try { await fs.promises.unlink(tmpPath); } catch (e) { /* ignore */ }
+    if (!res.headersSent) res.status(500).type('text/plain').send('Error streaming PDF');
+  });
+
+  return true;
 };
 
 module.exports.index = async (req, res) => {
