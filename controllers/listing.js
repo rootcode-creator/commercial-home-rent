@@ -333,86 +333,57 @@ module.exports.generateReceiptPdf = async (req, res) => {
         }
       }
 
-      if (!execPath) {
+      const useFallbackPdf = String(process.env.VERCEL || '') === '1';
+
+      if (!useFallbackPdf) {
         try {
-          const chromium = require('@sparticuz/chromium');
-          execPath = await chromium.executablePath();
-        } catch (chromiumErr) {
-          if (usingCore) {
-            console.error('No Chromium executable path configured:', chromiumErr.message);
-            req.flash('error', 'Server PDF generator not available. Install puppeteer or set PUPPETEER_EXECUTABLE_PATH with puppeteer-core.');
-            return res.redirect('/listings/reservations');
+          if (!execPath) {
+            const chromium = require('@sparticuz/chromium');
+            execPath = await chromium.executablePath();
           }
+
+          let browser;
+          try {
+            const launchOpts = { args: ['--no-sandbox', '--disable-setuid-sandbox'] };
+            if (usingCore && execPath) {
+              launchOpts.executablePath = execPath;
+            }
+
+            browser = await puppeteer.launch(launchOpts);
+            const page = await browser.newPage();
+            await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 0 });
+            await page.waitForFunction(() => Array.from(document.images).every((img) => img.complete), { timeout: 30000 });
+
+            const tmpPath = path.join(os.tmpdir(), `receipt-${sessionId}-${Date.now()}.pdf`);
+            await page.pdf({
+              path: tmpPath,
+              format: 'A4',
+              printBackground: true,
+              margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '20mm' },
+            });
+            await browser.close();
+
+            const streamed = await streamPdfFile(res, tmpPath, sessionId);
+            if (streamed) {
+              return;
+            }
+          } catch (browserErr) {
+            if (browser) await browser.close().catch(() => {});
+            console.error('Chromium PDF generation failed, using fallback:', browserErr);
+          }
+        } catch (chromiumErr) {
+          console.error('Chromium path unavailable, using fallback PDF:', chromiumErr);
         }
       }
 
-    let browser;
-    try {
-      const launchOpts = { args: ['--no-sandbox', '--disable-setuid-sandbox'] };
-      if (usingCore && execPath) {
-        launchOpts.executablePath = execPath;
-      }
-      browser = await puppeteer.launch(launchOpts);
-      const page = await browser.newPage();
-      // Avoid navigation timeout when rendering HTML fragments: wait for DOMContentLoaded and disable timeout
-      await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 0 });
-      // Ensure images are loaded (signature) before PDF render
-      await page.waitForFunction(() => Array.from(document.images).every((img) => img.complete), { timeout: 30000 });
-      const tmpPath = path.join(os.tmpdir(), `receipt-${sessionId}-${Date.now()}.pdf`);
-      await page.pdf({
-        path: tmpPath,
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '20mm' },
-      });
-      await browser.close();
-      const stat = await fs.promises.stat(tmpPath);
-      console.log('Generated PDF size', stat.size);
-
-      if (!stat.size || stat.size < 1000) {
-        const debugHtmlPath = path.join(process.cwd(), `debug-receipt-${sessionId}.html`);
-        await fs.promises.writeFile(debugHtmlPath, html, 'utf8');
-        console.error('PDF file too small; dumped rendered HTML to', debugHtmlPath);
-        try { await fs.promises.unlink(tmpPath); } catch (e) { /* ignore */ }
-        res.status(500).type('text/plain').send('PDF generation failed (empty or corrupted).');
+      const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId });
+      const streamed = await streamPdfFile(res, fallbackPath, sessionId);
+      if (streamed) {
         return;
       }
 
-      try {
-        const debugSave = String(process.env.PDF_SAVE_DEBUG || '').toLowerCase() === 'true';
-        if (debugSave) {
-          const debugPath = path.join(process.cwd(), `debug-receipt-${sessionId}.pdf`);
-          await fs.promises.copyFile(tmpPath, debugPath);
-          console.log('Saved debug copy of PDF at', debugPath);
-        }
-      } catch (dbgErr) {
-        console.error('Error saving debug PDF copy:', dbgErr);
-      }
-
-      res.set({
-        'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename=receipt-${sessionId}.pdf`,
-        'Content-Length': stat.size,
-      });
-
-      const stream = fs.createReadStream(tmpPath);
-      stream.pipe(res);
-      stream.on('close', async () => {
-        try { await fs.promises.unlink(tmpPath); } catch (e) { /* ignore */ }
-      });
-      stream.on('error', async (err) => {
-        console.error('Stream error serving PDF:', err);
-        try { await fs.promises.unlink(tmpPath); } catch (e) { /* ignore */ }
-        if (!res.headersSent) res.status(500).type('text/plain').send('Error streaming PDF');
-      });
+      res.status(500).type('text/plain').send('PDF generation failed');
       return;
-    } catch (error) {
-      if (browser) await browser.close().catch(() => {});
-      console.error('PDF generation error:', error);
-      // Send plain error text so browser doesn't try to render a broken PDF
-      res.status(500).type('text/plain').send('PDF generation error: ' + (error && error.message ? error.message : 'unknown'));
-      return;
-    }
   });
 };
 
