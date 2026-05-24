@@ -43,7 +43,8 @@ const buildBookingEmail = async (record) => {
   const subtotal = total; // no itemized breakdown available here
   const tax = "0.00";
   const paymentMethod = Array.isArray(record.paymentMethodTypes) && record.paymentMethodTypes.length > 0 ? record.paymentMethodTypes[0] : "card";
-  const bookingUrl = `${process.env.APP_ORIGIN || ""}/listings/reservations`;
+  const appOrigin = (process.env.BASEURL || process.env.APP_ORIGIN || "").replace(/\/$/, "");
+  const bookingUrl = `${appOrigin}/listings/reservations`;
   const supportEmail =
     process.env.SUPPORT_EMAIL ||
     "booking-confirmation@wanderlust.kawserahmed.tech";
