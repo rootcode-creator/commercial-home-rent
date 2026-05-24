@@ -75,6 +75,41 @@ const buildBookingEmail = async (record) => {
   return { subject, html, text };
 };
 
+const buildCancellationEmail = async (record) => {
+  const listingTitle = record.listingTitle || "Booked listing";
+  const bookingDays = record.bookingDays || 1;
+  const currency = record.originalCurrency || record.localCurrency || record.currency || "USD";
+  const totalValue = record.originalAmountTotal ?? record.localAmountTotal ?? record.amountTotal ?? 0;
+  const total = (Number(totalValue) || 0).toFixed(2);
+  const canceledAt = new Date().toLocaleString();
+  const bookingId = record.sessionId || record.paymentIntentId || "";
+  const supportEmail =
+    process.env.SUPPORT_EMAIL ||
+    "booking-cancel@wanderlust.kawserahmed.tech";
+  const logoUrl = process.env.LOGO_URL || "https://your-cdn.example/logo.png";
+
+  const subject = `Booking canceled: ${listingTitle}`;
+
+  const templatePath = path.join(__dirname, "..", "views", "emails", "bookingcancel.ejs");
+  const html = await ejs.renderFile(templatePath, {
+    listingTitle,
+    bookingDays,
+    currency,
+    total,
+    bookingId,
+    canceledAt,
+    supportEmail,
+    logoUrl,
+    listingLocation: record.listingLocation || "",
+    listingCountry: record.listingCountry || "",
+    customerName: record.customerName || "",
+  });
+
+  const text = `Booking canceled: ${listingTitle} - Booking #${bookingId}\n\nHello ${record.customerName || 'Guest'},\n\nYour reservation has been canceled successfully.\n\nListing: ${listingTitle}\nLocation: ${record.listingLocation || ''}${record.listingCountry ? ', ' + record.listingCountry : ''}\nDays: ${bookingDays}\nCanceled at: ${canceledAt}\nTotal paid: ${currency} ${total}\n\nIf you have questions, contact ${supportEmail}.\n\nThanks,\nWanderlust Private Limited`;
+
+  return { subject, html, text };
+};
+
 const sendBookingEmail = async (record, force = false) => {
   if (!record || (record.emailSentAt && !force)) {
     return;
@@ -106,6 +141,40 @@ const sendBookingEmail = async (record, force = false) => {
   await PaymentRecord.updateOne(
     { sessionId: record.sessionId },
     { $set: { emailSentAt: new Date(), emailSentTo: to } }
+  );
+};
+
+const sendBookingCancellationEmail = async (record, force = false) => {
+  if (!record || (record.cancellationEmailSentAt && !force)) {
+    return;
+  }
+
+  const resend = getResend();
+  if (!resend) {
+    return;
+  }
+
+  const to = record.customerEmail;
+  if (!to) {
+    return;
+  }
+
+  const from =
+    process.env.RESEND_CANCEL_FROM_EMAIL ||
+    "Wanderlust Private Limited <booking-cancel@wanderlust.kawserahmed.tech>";
+  const { subject, html, text } = await buildCancellationEmail(record);
+
+  await resend.emails.send({
+    from,
+    to: [to],
+    subject,
+    html,
+    text,
+  });
+
+  await PaymentRecord.updateOne(
+    { sessionId: record.sessionId },
+    { $set: { cancellationEmailSentAt: new Date(), cancellationEmailSentTo: to } }
   );
 };
 
@@ -271,4 +340,10 @@ const handleStripeWebhook = async (req, res) => {
   }
 };
 
-module.exports = { handleStripeWebhook, sendBookingEmail, buildBookingEmail };
+module.exports = {
+  handleStripeWebhook,
+  sendBookingEmail,
+  buildBookingEmail,
+  sendBookingCancellationEmail,
+  buildCancellationEmail,
+};

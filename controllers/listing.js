@@ -1,5 +1,6 @@
 const Listing = require("../models/listing.js");
 const PaymentRecord = require("../models/paymentRecord.js");
+const { sendBookingCancellationEmail } = require("./webhook.js");
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const fs = require('fs');
 const os = require('os');
@@ -204,32 +205,36 @@ module.exports.generateReceiptPdf = async (req, res) => {
     }
     console.log('Rendered HTML length', html && html.length);
 
-    let puppeteer = null;
-    let usingCore = false;
-    const execPath = process.env.PUPPETEER_EXECUTABLE_PATH;
-    try {
-      // prefer puppeteer-core to avoid downloading Chromium; requires PUPPETEER_EXECUTABLE_PATH
-      puppeteer = require('puppeteer-core');
-      usingCore = true;
-      if (!execPath) {
-        // if no exec path provided, attempt to fall back to full puppeteer
+      let puppeteer = null;
+      let usingCore = false;
+      let execPath = process.env.PUPPETEER_EXECUTABLE_PATH || null;
+
+      try {
+        puppeteer = require('puppeteer-core');
+        usingCore = true;
+      } catch (coreErr) {
         try {
           puppeteer = require('puppeteer');
           usingCore = false;
-        } catch (e) {
-          // leave usingCore true but without execPath; will error below
+        } catch (fullErr) {
+          console.error('Puppeteer not installed:', coreErr.message, fullErr && fullErr.message);
+          req.flash('error', 'Server PDF generator not available. Install puppeteer or set PUPPETEER_EXECUTABLE_PATH with puppeteer-core.');
+          return res.redirect('/listings/reservations');
         }
       }
-    } catch (e1) {
-      try {
-        puppeteer = require('puppeteer');
-        usingCore = false;
-      } catch (e2) {
-        console.error('Puppeteer not installed:', e1.message, e2 && e2.message);
-        req.flash('error', 'Server PDF generator not available. Install puppeteer or set PUPPETEER_EXECUTABLE_PATH with puppeteer-core.');
-        return res.redirect('/listings/reservations');
+
+      if (!execPath) {
+        try {
+          const chromium = require('@sparticuz/chromium');
+          execPath = await chromium.executablePath();
+        } catch (chromiumErr) {
+          if (usingCore) {
+            console.error('No Chromium executable path configured:', chromiumErr.message);
+            req.flash('error', 'Server PDF generator not available. Install puppeteer or set PUPPETEER_EXECUTABLE_PATH with puppeteer-core.');
+            return res.redirect('/listings/reservations');
+          }
+        }
       }
-    }
 
     let browser;
     try {
@@ -385,6 +390,12 @@ module.exports.cancelReservation = async (req, res) => {
   if (!isBuyer && !isOwner) {
     req.flash('error', 'You do not have permission to cancel this reservation');
     return res.redirect('/listings/reservations');
+  }
+
+  try {
+    await sendBookingCancellationEmail(record);
+  } catch (emailErr) {
+    console.error('Error sending booking cancellation email:', emailErr);
   }
 
   const result = await PaymentRecord.deleteOne({ sessionId });
