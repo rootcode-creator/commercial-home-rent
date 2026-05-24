@@ -91,6 +91,7 @@
                     <a href="/listings/<%= record.listing._id %>" class="btn btn-sm btn-outline-dark">View</a>
                   <% } %>
                   <a href="/listings/reservations/<%= record.sessionId %>/receipt" class="btn btn-sm btn-outline-primary">Receipt</a>
+                  <a href="/listings/reservations/<%= record.sessionId %>/pdf" class="btn btn-sm btn-outline-secondary">Download PDF</a>
                   <form action="/listings/reservations/<%= record.sessionId %>/cancel" method="POST" class="m-0">
                     <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Cancel this reservation?');">Cancel</button>
                   </form>

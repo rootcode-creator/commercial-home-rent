@@ -63,6 +63,8 @@
     </div>
     <div class="col-4 text-end">
       <a href="/listings/reservations" class="btn btn-outline-dark mb-2 no-print">Back to Reservations</a>
+      <button type="button" class="btn btn-outline-primary mb-2 no-print ms-2" onclick="window.print()">Print Receipt</button>
+      <a href="/listings/reservations/<%= record.sessionId %>/pdf" class="btn btn-outline-secondary mb-2 no-print ms-2">Download PDF</a>
       <div class="small text-muted">Website: <%= host %></div>
     </div>
   </div>
