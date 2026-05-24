@@ -33,6 +33,21 @@ const categoryLabels = {
   boats: "Boats",
 };
 
+const loadPuppeteer = async () => {
+  try {
+    const coreModule = await import("puppeteer-core");
+    return { puppeteer: coreModule.default || coreModule, usingCore: true };
+  } catch (coreErr) {
+    try {
+      const fullModule = await import("puppeteer");
+      return { puppeteer: fullModule.default || fullModule, usingCore: false };
+    } catch (fullErr) {
+      console.error("Puppeteer not installed:", coreErr.message, fullErr && fullErr.message);
+      return { puppeteer: null, usingCore: false };
+    }
+  }
+};
+
 const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
   const tmpPath = path.join(os.tmpdir(), `receipt-${sessionId}-${Date.now()}.pdf`);
   const doc = new PDFDocument({ size: 'A4', margin: 48 });
@@ -315,22 +330,12 @@ module.exports.generateReceiptPdf = async (req, res) => {
     }
     console.log('Rendered HTML length', html && html.length);
 
-      let puppeteer = null;
-      let usingCore = false;
+      const { puppeteer, usingCore } = await loadPuppeteer();
       let execPath = process.env.PUPPETEER_EXECUTABLE_PATH || null;
 
-      try {
-        puppeteer = require('puppeteer-core');
-        usingCore = true;
-      } catch (coreErr) {
-        try {
-          puppeteer = require('puppeteer');
-          usingCore = false;
-        } catch (fullErr) {
-          console.error('Puppeteer not installed:', coreErr.message, fullErr && fullErr.message);
-          req.flash('error', 'Server PDF generator not available. Install puppeteer or set PUPPETEER_EXECUTABLE_PATH with puppeteer-core.');
-          return res.redirect('/listings/reservations');
-        }
+      if (!puppeteer) {
+        req.flash('error', 'Server PDF generator not available. Install puppeteer or set PUPPETEER_EXECUTABLE_PATH with puppeteer-core.');
+        return res.redirect('/listings/reservations');
       }
 
       const useFallbackPdf = String(process.env.VERCEL || '') === '1';
