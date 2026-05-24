@@ -2,12 +2,31 @@
 
 <div class="container mt-5 mb-5">
   <div class="row justify-content-center">
-    <div class="col-12 col-md-8">
-      <div class="cart-panel text-center">
-        <h3 class="mb-3">Payment cancelled</h3>
-        <p class="text-muted">Your payment was cancelled. You can try again anytime.</p>
-        <div class="d-flex justify-content-center gap-2 mt-4">
-          <a href="/listings" class="btn btn-outline-dark">Back to Listings</a>
+    <div class="col-12 col-lg-8 col-xl-7">
+      <div class="cart-panel booking-success-panel text-center">
+        <div class="booking-success-badge mx-auto mb-3">
+          <i class="fa-solid fa-circle-xmark"></i>
+        </div>
+        <p class="booking-success-eyebrow mb-2">Payment stopped</p>
+        <h1 class="booking-success-title mb-3">Your booking was cancelled</h1>
+        <p class="booking-success-copy mb-4">
+          No charge was completed. You can try again anytime or browse a different listing.
+        </p>
+
+        <div class="booking-success-grid text-start mb-4">
+          <div class="booking-success-item">
+            <span class="booking-success-label">Charge status</span>
+            <span class="booking-success-value">No payment was captured for this booking.</span>
+          </div>
+          <div class="booking-success-item">
+            <span class="booking-success-label">Next step</span>
+            <span class="booking-success-value">Return to listings and start a new booking when you’re ready.</span>
+          </div>
+        </div>
+
+        <div class="d-flex flex-column flex-sm-row justify-content-center gap-2">
+          <a href="/listings" class="btn btn-dark px-4">Try again</a>
+          <a href="/listings" class="btn btn-outline-dark px-4">Back to Listings</a>
         </div>
       </div>
     </div>
