@@ -1,0 +1,21 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="row mt-5 mb-5">
+  <div class="col-12 col-md-8 col-lg-6 mx-auto">
+    <div class="card shadow-sm payment-card">
+      <div class="card-body p-4">
+        <h3 class="card-title mb-3">Payment for <%= listing.title %></h3>
+        <p class="text-muted mb-2">Owned by <b><%= listing.owner.username %></b></p>
+
+        <div class="p-3 bg-light rounded mb-3">
+          <p class="mb-1"><strong>Stay price:</strong> ৳<%= listing.price.toLocaleString("en-BN") %> / night</p>
+          <p class="mb-1"><strong>Location:</strong> <%= listing.location %>, <%= listing.country %></p>
+          <p class="mb-0">This page is ready for a payment gateway connection.</p>
+        </div>
+
+        <a href="/listings/<%= listing._id %>" class="btn btn-outline-dark me-2">Back to Listing</a>
+        <button class="btn payment-btn" type="button">Pay Now</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,5 +1,9 @@
 const Listing = require("../models/listing.js");
+const PaymentRecord = require("../models/paymentRecord.js");
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 const mapToken = process.env.MAP_TOKEN;
 const geocodingClient = mbxGeocoding({ accessToken: mapToken });
 
@@ -98,6 +102,206 @@ module.exports.showListing = async (req, res) => {
 };
 
 
+module.exports.renderPaymentPage = async (req, res) => {
+  let { id } = req.params;
+  return res.redirect(`/cart/${id}`);
+};
+
+
+module.exports.renderReservationsPage = async (req, res) => {
+  const filters = {
+    status: "paid",
+    paymentStatus: "paid",
+    lastEventType: { $in: ["checkout.session.completed", "checkout.session.async_payment_succeeded"] },
+    $or: [
+      { userId: String(req.user._id) },
+      { customerEmail: req.user.email },
+    ],
+  };
+
+  const paymentRecords = await PaymentRecord.find(filters)
+    .sort({ createdAt: -1 })
+    .lean();
+
+  const listingIds = [...new Set(paymentRecords.map((record) => record.listingId).filter(Boolean))];
+  const listings = await Listing.find({ _id: { $in: listingIds } }).lean();
+  const listingsById = new Map(listings.map((listing) => [String(listing._id), listing]));
+
+  const reservations = paymentRecords.map((record) => ({
+    ...record,
+    listing: listingsById.get(String(record.listingId)) || null,
+  }));
+
+  return res.render("listings/reservations.ejs", { reservations });
+};
+
+
+module.exports.renderReceipt = async (req, res) => {
+  const { sessionId } = req.params;
+  if (!sessionId) {
+    req.flash("error", "Receipt not found");
+    return res.redirect('/listings/reservations');
+  }
+
+  const record = await PaymentRecord.findOne({ sessionId }).lean();
+  if (!record) {
+    req.flash("error", "Receipt not found");
+    return res.redirect('/listings/reservations');
+  }
+
+  // permission: buyer (userId or customerEmail) or listing owner
+  const isBuyer = String(record.userId) === String(req.user._id) || String(record.customerEmail || '').toLowerCase() === String(req.user.email || '').toLowerCase();
+  let listing = null;
+  if (record.listingId) {
+    listing = await Listing.findById(record.listingId).select('owner title location country').lean();
+  }
+
+  const isOwner = listing && listing.owner && String(listing.owner) === String(req.user._id);
+  // fallback check: allow if buyer or owner
+  if (!isBuyer && !isOwner) {
+    req.flash('error', 'You do not have permission to view this receipt');
+    return res.redirect('/listings/reservations');
+  }
+
+  const host = req.get('host');
+  return res.render('listings/receipt.ejs', { record, listing, host });
+};
+
+
+module.exports.generateReceiptPdf = async (req, res) => {
+  const { sessionId } = req.params;
+  if (!sessionId) {
+    req.flash('error', 'Receipt not found');
+    return res.redirect('/listings/reservations');
+  }
+
+  const record = await PaymentRecord.findOne({ sessionId }).lean();
+  if (!record) {
+    req.flash('error', 'Receipt not found');
+    return res.redirect('/listings/reservations');
+  }
+
+  let listing = null;
+  if (record.listingId) {
+    listing = await Listing.findById(record.listingId).select('owner title location country').lean();
+  }
+
+  const isBuyer = String(record.userId) === String(req.user._id) || String(record.customerEmail || '').toLowerCase() === String(req.user.email || '').toLowerCase();
+  const isOwner = listing && listing.owner && String(listing.owner) === String(req.user._id);
+  if (!isBuyer && !isOwner) {
+    req.flash('error', 'You do not have permission to download this receipt');
+    return res.redirect('/listings/reservations');
+  }
+
+  // Render the receipt to HTML first
+  const host = req.get('host');
+  console.log('Generating PDF for session', sessionId, 'user', req.user && req.user._id);
+  res.render('listings/receipt.ejs', { record, listing, host }, async (err, html) => {
+    if (err) {
+      console.error('Render error for PDF:', err);
+      res.status(500).type('text/plain').send('Render error for PDF');
+      return;
+    }
+    console.log('Rendered HTML length', html && html.length);
+
+    let puppeteer = null;
+    let usingCore = false;
+    const execPath = process.env.PUPPETEER_EXECUTABLE_PATH;
+    try {
+      // prefer puppeteer-core to avoid downloading Chromium; requires PUPPETEER_EXECUTABLE_PATH
+      puppeteer = require('puppeteer-core');
+      usingCore = true;
+      if (!execPath) {
+        // if no exec path provided, attempt to fall back to full puppeteer
+        try {
+          puppeteer = require('puppeteer');
+          usingCore = false;
+        } catch (e) {
+          // leave usingCore true but without execPath; will error below
+        }
+      }
+    } catch (e1) {
+      try {
+        puppeteer = require('puppeteer');
+        usingCore = false;
+      } catch (e2) {
+        console.error('Puppeteer not installed:', e1.message, e2 && e2.message);
+        req.flash('error', 'Server PDF generator not available. Install puppeteer or set PUPPETEER_EXECUTABLE_PATH with puppeteer-core.');
+        return res.redirect('/listings/reservations');
+      }
+    }
+
+    let browser;
+    try {
+      const launchOpts = { args: ['--no-sandbox', '--disable-setuid-sandbox'] };
+      if (usingCore && execPath) {
+        launchOpts.executablePath = execPath;
+      }
+      browser = await puppeteer.launch(launchOpts);
+      const page = await browser.newPage();
+      // Avoid navigation timeout when rendering HTML fragments: wait for DOMContentLoaded and disable timeout
+      await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 0 });
+      // Ensure images are loaded (signature) before PDF render
+      await page.waitForFunction(() => Array.from(document.images).every((img) => img.complete), { timeout: 30000 });
+      const tmpPath = path.join(os.tmpdir(), `receipt-${sessionId}-${Date.now()}.pdf`);
+      await page.pdf({
+        path: tmpPath,
+        format: 'A4',
+        printBackground: true,
+        margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '20mm' },
+      });
+      await browser.close();
+      const stat = await fs.promises.stat(tmpPath);
+      console.log('Generated PDF size', stat.size);
+
+      if (!stat.size || stat.size < 1000) {
+        const debugHtmlPath = path.join(process.cwd(), `debug-receipt-${sessionId}.html`);
+        await fs.promises.writeFile(debugHtmlPath, html, 'utf8');
+        console.error('PDF file too small; dumped rendered HTML to', debugHtmlPath);
+        try { await fs.promises.unlink(tmpPath); } catch (e) { /* ignore */ }
+        res.status(500).type('text/plain').send('PDF generation failed (empty or corrupted).');
+        return;
+      }
+
+      try {
+        const debugSave = String(process.env.PDF_SAVE_DEBUG || '').toLowerCase() === 'true';
+        if (debugSave) {
+          const debugPath = path.join(process.cwd(), `debug-receipt-${sessionId}.pdf`);
+          await fs.promises.copyFile(tmpPath, debugPath);
+          console.log('Saved debug copy of PDF at', debugPath);
+        }
+      } catch (dbgErr) {
+        console.error('Error saving debug PDF copy:', dbgErr);
+      }
+
+      res.set({
+        'Content-Type': 'application/pdf',
+        'Content-Disposition': `attachment; filename=receipt-${sessionId}.pdf`,
+        'Content-Length': stat.size,
+      });
+
+      const stream = fs.createReadStream(tmpPath);
+      stream.pipe(res);
+      stream.on('close', async () => {
+        try { await fs.promises.unlink(tmpPath); } catch (e) { /* ignore */ }
+      });
+      stream.on('error', async (err) => {
+        console.error('Stream error serving PDF:', err);
+        try { await fs.promises.unlink(tmpPath); } catch (e) { /* ignore */ }
+        if (!res.headersSent) res.status(500).type('text/plain').send('Error streaming PDF');
+      });
+      return;
+    } catch (error) {
+      if (browser) await browser.close().catch(() => {});
+      console.error('PDF generation error:', error);
+      // Send plain error text so browser doesn't try to render a broken PDF
+      res.status(500).type('text/plain').send('PDF generation error: ' + (error && error.message ? error.message : 'unknown'));
+      return;
+    }
+  });
+};
+
+
 module.exports.createListing = async (req, res, next) => {
   
   let response = await geocodingClient.forwardGeocode({
@@ -155,4 +359,40 @@ module.exports.destroyListing = async (req, res) => {
   await Listing.findByIdAndDelete(id);
   req.flash("success", "Listing Deleted!");
   return res.redirect("/listings");
+};
+
+
+module.exports.cancelReservation = async (req, res) => {
+  const sessionId = String(req.params.sessionId || '').trim();
+  if (!sessionId) {
+    req.flash('error', 'Reservation not found');
+    return res.redirect('/listings/reservations');
+  }
+
+  const record = await PaymentRecord.findOne({ sessionId }).lean();
+  if (!record) {
+    req.flash('error', 'Reservation not found');
+    return res.redirect('/listings/reservations');
+  }
+
+  let listing = null;
+  if (record.listingId) {
+    listing = await Listing.findById(record.listingId).select('owner').lean();
+  }
+
+  const isBuyer = String(record.userId) === String(req.user._id) || String(record.customerEmail || '').toLowerCase() === String(req.user.email || '').toLowerCase();
+  const isOwner = listing && listing.owner && String(listing.owner) === String(req.user._id);
+  if (!isBuyer && !isOwner) {
+    req.flash('error', 'You do not have permission to cancel this reservation');
+    return res.redirect('/listings/reservations');
+  }
+
+  const result = await PaymentRecord.deleteOne({ sessionId });
+  if (!result || result.deletedCount === 0) {
+    req.flash('error', 'Reservation could not be canceled');
+    return res.redirect('/listings/reservations');
+  }
+
+  req.flash('success', 'Reservation canceled');
+  return res.redirect('/listings/reservations');
 };

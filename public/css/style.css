@@ -154,6 +154,264 @@ body {
   border: none !important;
 }
 
+.payment-btn {
+  background-color: #fe424d !important;
+  border: none !important;
+  color: white !important;
+}
+
+.payment-btn:hover {
+  background-color: #e63b45 !important;
+  color: white !important;
+}
+
+.payment-card {
+  border-radius: 1rem;
+}
+
+/* Cart Page */
+.cart-page {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto 3rem;
+}
+
+.cart-breadcrumb {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  color: #707070;
+  font-size: 0.95rem;
+}
+
+.cart-breadcrumb a {
+  color: #707070;
+  text-decoration: none;
+}
+
+.cart-panel,
+.cart-summary {
+  background: #ffffff;
+  border: 1px solid #edf0f5;
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+
+.booking-success-panel {
+  position: relative;
+  overflow: hidden;
+  padding: 2.25rem 1.5rem;
+}
+
+.booking-success-badge {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 1.4rem;
+}
+
+.booking-success-check {
+  color: #15803d;
+}
+
+.booking-success-eyebrow {
+  color: #0f766e;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.booking-success-title {
+  font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: #111827;
+}
+
+.booking-success-copy {
+  color: #6b7280;
+  font-size: 1.05rem;
+  max-width: 38rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.booking-success-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.booking-success-item {
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.85rem;
+  padding: 1rem 1rem 0.95rem;
+}
+
+.booking-success-label {
+  display: block;
+  color: #6b7280;
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.35rem;
+}
+
+.booking-success-value {
+  display: block;
+  color: #111827;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+@media (max-width: 575.98px) {
+  .booking-success-panel {
+    padding: 1.75rem 1rem;
+  }
+
+  .booking-success-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cart-table thead th {
+  border-bottom: 1px solid #eef1f4;
+  color: #6b7280;
+  font-weight: 500;
+  padding-top: 0.5rem;
+  padding-bottom: 1rem;
+}
+
+.cart-table tbody td {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  border-color: #f3f4f6;
+}
+
+.cart-item-img {
+  width: 3rem;
+  height: 3rem;
+  object-fit: cover;
+  border-radius: 0.5rem;
+}
+
+.cart-item-title {
+  display: inline-block;
+  font-weight: 700;
+  color: #3b5bfd;
+  text-decoration: none;
+}
+
+.cart-item-meta {
+  color: #777777;
+  font-size: 0.9rem;
+  margin-top: 0.15rem;
+}
+
+.cart-qty-group {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #e3e8ef;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.cart-qty-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: none;
+  background: #ffffff;
+  color: #6b7280;
+  padding: 0;
+}
+
+.cart-qty-btn:disabled {
+  background: #f4f4f4;
+  color: #b0b0b0;
+  cursor: not-allowed;
+}
+
+.cart-qty-value {
+  min-width: 2rem;
+  text-align: center;
+  border-left: 1px solid #e3e8ef;
+  border-right: 1px solid #e3e8ef;
+  line-height: 1.75rem;
+}
+
+.cart-remove {
+  color: #777777;
+  text-decoration: none;
+}
+
+.cart-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.cart-secondary-btn {
+  border-radius: 0.85rem;
+  padding-inline: 1.25rem;
+}
+
+.cart-summary {
+  position: sticky;
+  top: 1rem;
+}
+
+.cart-summary-title {
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.cart-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid #f1f3f6;
+}
+
+.cart-summary-row.total-row {
+  border-bottom: none;
+  font-size: 1.05rem;
+}
+
+.cart-pay-btn {
+  background-color: #fe424d !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 0.6rem;
+  margin-top: 0.75rem;
+}
+
+.cart-pay-btn:hover {
+  background-color: #e63b45 !important;
+  color: #ffffff !important;
+}
+
+.cart-back-btn {
+  margin-top: 0.6rem;
+  border-radius: 0.6rem;
+}
+
+.cart-disclaimer {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-align: center;
+}
+
 .show-card {
   padding-left: 0;
   padding-right: 0;

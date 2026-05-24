@@ -33,6 +33,11 @@
           <p class="card-text">
             <i class="fa-solid fa-flag"></i> &nbsp;<%= listing.country %>
           </p>
+          <% if (currUser && !listing.owner._id.equals(currUser._id)) { %>
+            <a href="/cart/<%= listing._id %>" class="btn payment-btn mb-3 mt-2">
+              Proceed to Payment
+            </a>
+          <% } %>
       </div>
     </div>
 

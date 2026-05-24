@@ -1,0 +1,105 @@
+<% layout("/layouts/boilerplate") -%>
+
+<%
+  const formatNumber = (value) => Number(value || 0).toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  const formatUsd = (value) => Number(value || 0).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+
+  const getDisplayUsdAmount = (record) => {
+    const usd = Number(record?.usdAmountTotal);
+    const base = Number(record?.amountTotal);
+    const originalCurrency = String(record?.originalCurrency || record?.localCurrency || "").toUpperCase();
+
+    if (Number.isFinite(usd)) {
+      if (Number.isFinite(base) && Math.abs(usd - (base * 100)) < 0.001) {
+        return base;
+      }
+
+      const usdIsWhole = Math.abs(usd - Math.trunc(usd)) < 0.000001;
+      if (usdIsWhole && usd >= 1000 && originalCurrency && originalCurrency !== "USD") {
+        return usd / 100;
+      }
+
+      return usd;
+    }
+
+    if (String(record?.currency || "").toUpperCase() === "USD" && Number.isFinite(base)) {
+      const baseIsWhole = Math.abs(base - Math.trunc(base)) < 0.000001;
+      if (baseIsWhole && base >= 1000 && originalCurrency && originalCurrency !== "USD") {
+        return base / 100;
+      }
+      return base;
+    }
+
+    return null;
+  };
+%>
+
+<div class="container mt-5 mb-5">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+      <h2 class="mb-1">Reservations</h2>
+      <p class="text-muted mb-0">Completed payments for your current account.</p>
+    </div>
+    <a href="/listings" class="btn btn-outline-dark">Back to Listings</a>
+  </div>
+
+  <% if (!reservations || reservations.length === 0) { %>
+    <div class="alert alert-light border">You don’t have any reservations yet. When you book a listing, it will show up here.</div>
+  <% } else { %>
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Listing</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Booked For</th>
+            <th>Amount Paid (Local / USD)</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% reservations.forEach(function(record) { %>
+            <tr>
+              <td><%= record.listing?.title || record.listingTitle || "Booked listing" %></td>
+              <td>
+                <%= record.listing?.location || record.listingLocation || "Location unavailable" %>
+                <% if (record.listing?.country || record.listingCountry) { %>, <%= record.listing?.country || record.listingCountry %><% } %>
+              </td>
+              <td><span class="badge text-bg-success">Completed</span></td>
+              <td><%= record.bookingDays || 1 %> day(s)</td>
+              <td>
+                <% const usdAmount = getDisplayUsdAmount(record); %>
+                <% if (usdAmount !== null && usdAmount !== undefined) { %>
+                  <%= formatUsd(usdAmount) %>
+                <% } else { %>
+                  <span class="text-muted">N/A</span>
+                <% } %>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-1 flex-nowrap">
+                  <% if (record.listing) { %>
+                    <a href="/listings/<%= record.listing._id %>" class="btn btn-sm btn-outline-dark">View</a>
+                  <% } %>
+                  <a href="/listings/reservations/<%= record.sessionId %>/receipt" class="btn btn-sm btn-outline-primary">Receipt</a>
+                  <form action="/listings/reservations/<%= record.sessionId %>/cancel" method="POST" class="m-0">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Cancel this reservation?');">Cancel</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>

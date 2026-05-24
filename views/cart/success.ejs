@@ -1,0 +1,34 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="container mt-5 mb-5">
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8 col-xl-7">
+      <div class="cart-panel booking-success-panel text-center">
+        <div class="booking-success-badge mx-auto mb-3">
+          <i class="fa-solid fa-check booking-success-check"></i>
+        </div>
+        <p class="booking-success-eyebrow mb-2">Payment completed</p>
+        <h1 class="booking-success-title mb-3">Your booking is confirmed</h1>
+        <p class="booking-success-copy mb-4">
+          Thanks! Your payment has been received and a booking confirmation email has been sent.
+        </p>
+
+        <div class="booking-success-grid text-start mb-4">
+          <div class="booking-success-item">
+            <span class="booking-success-label">Next step</span>
+            <span class="booking-success-value">Check your inbox for the confirmation email.</span>
+          </div>
+          <div class="booking-success-item">
+            <span class="booking-success-label">Manage booking</span>
+            <span class="booking-success-value">View your reserved listing from your bookings page.</span>
+          </div>
+        </div>
+
+        <div class="d-flex flex-column flex-sm-row justify-content-center gap-2">
+          <a href="/listings/reservations" class="btn btn-dark px-4">View my bookings</a>
+          <a href="/listings" class="btn btn-outline-dark px-4">Back to Listings</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

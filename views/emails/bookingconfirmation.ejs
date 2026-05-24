@@ -1,0 +1,54 @@
+<div style="font-family: Arial, sans-serif; color: #111; line-height:1.5; max-width:680px; margin:0 auto; padding:20px;">
+  <div style="text-align:center; padding-bottom:12px;">
+    <img src="<%= logoUrl %>" alt="Wanderlust" style="height:48px;"/>
+  </div>
+  <h2 style="color:#0a4d8c; margin-top:0;">Thank you, <%= customerName || 'Guest' %> — your booking is confirmed</h2>
+  <p style="margin:8px 0;">We’ve received your payment and reserved the listing below. If you have any questions, reply to <a href="mailto:<%= supportEmail %>"><%= supportEmail %></a>.</p>
+
+  <table style="width:100%; border-collapse:collapse; margin:18px 0;">
+    <tr>
+      <td style="padding:8px 0; vertical-align:top; width:65%;">
+        <strong><%= listingTitle %></strong><br/>
+        <span style="color:#555;"><%= listingLocation %><% if (listingCountry) { %>, <%= listingCountry %><% } %></span>
+      </td>
+      <td style="padding:8px 0; text-align:right; vertical-align:top;">
+        <strong><%= currency %> <%= total %></strong>
+      </td>
+    </tr>
+  </table>
+
+  <table style="width:100%; border-collapse:collapse; margin-bottom:18px;">
+    <tr>
+      <td style="padding:6px 0; color:#333;"><strong>Booking ID</strong></td>
+      <td style="padding:6px 0; text-align:right; color:#333;"><%= bookingId %></td>
+    </tr>
+    <tr>
+      <td style="padding:6px 0; color:#333;"><strong>Days</strong></td>
+      <td style="padding:6px 0; text-align:right; color:#333;"><%= bookingDays %></td>
+    </tr>
+    <tr>
+      <td style="padding:6px 0; color:#333;"><strong>Reservation date</strong></td>
+      <td style="padding:6px 0; text-align:right; color:#333;"><%= reservationDate %></td>
+    </tr>
+    <tr>
+      <td style="padding:6px 0; color:#333;"><strong>Payment method</strong></td>
+      <td style="padding:6px 0; text-align:right; color:#333;"><%= paymentMethod %></td>
+    </tr>
+  </table>
+
+  <div style="background:#f8f9fb; border-radius:6px; padding:12px; margin-bottom:18px;">
+    <strong>Receipt</strong>
+    <div style="margin-top:8px; color:#333;">
+      <div style="display:flex; justify-content:space-between;"><div>Subtotal</div><div><%= currency %> <%= subtotal %></div></div>
+      <div style="display:flex; justify-content:space-between;"><div>Tax / GST</div><div><%= currency %> <%= tax %></div></div>
+      <div style="display:flex; justify-content:space-between; font-weight:600; margin-top:8px;"><div>Total paid</div><div><%= currency %> <%= total %></div></div>
+    </div>
+  </div>
+
+  <p style="margin:8px 0;">You can view and manage your booking at <a href="<%= bookingUrl %>"><%= bookingUrl %></a>.</p>
+
+  <p style="margin:16px 0 0 0; color:#555;">Thanks again —<br/>Wanderlust Private Limited</p>
+
+  <hr style="margin:20px 0; border:none; border-top:1px solid #eee;"/>
+  <p style="font-size:12px; color:#999; margin:0;">If you believe this was sent in error, contact <a href="mailto:<%= supportEmail %>"><%= supportEmail %></a>. This is an automated message; please do not reply to this address.</p>
+</div>

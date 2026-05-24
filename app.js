@@ -16,12 +16,18 @@ const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
+const { isLoggedIn } = require("./middleware.js");
+const { startDailyExchangeRateRefresh } = require("./utils/exchangeRates.js");
+const { handleStripeWebhook } = require("./controllers/webhook.js");
 const port = process.env.PORT || 8080;
 
 
 const listingRouter = require("./routes/listing.js");
+const cartRouter = require("./routes/cart.js");
 const reviewRouter = require("./routes/review.js");
 const userRouter = require("./routes/user.js");
+const paymentRouter = require("./routes/payment.js");
+const cartController = require("./controllers/cart.js");
 
 
 // const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
@@ -37,6 +43,7 @@ const useMongoSessionStore =
 main()
   .then(() => {
     console.log("Connected to database");
+    startDailyExchangeRateRefresh();
   })
   .catch((err) => {
     console.log(err);
@@ -48,6 +55,8 @@ async function main() {
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
+app.post("/webhooks/stripe", express.raw({ type: "application/json" }), handleStripeWebhook);
+app.use(express.json());
 app.use(methodOverride("_method"));
 app.engine('ejs', ejsMate);
 app.use(express.static(path.join(__dirname, "/public")));
@@ -139,8 +148,12 @@ app.use( (req, res, next) => {
 });
 
 app.use("/listings", listingRouter);
+app.use("/cart", cartRouter);
 app.use("/listings/:id/reviews", reviewRouter);
 app.use("/", userRouter);
+app.use("/payments", paymentRouter);
+
+app.get("/booked-listings", isLoggedIn, (req, res) => res.redirect("/listings/reservations"));
 
 
 app.all("*", (req, res, next) => {

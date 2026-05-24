@@ -22,6 +22,12 @@ router.route("/")
 //New Route
 router.get("/new", isLoggedIn, listingController.renderNewForm);
 
+router.get("/reservations", isLoggedIn, wrapAsync(listingController.renderReservationsPage));
+
+router.get("/reservations/:sessionId/receipt", isLoggedIn, wrapAsync(listingController.renderReceipt));
+router.get("/reservations/:sessionId/pdf", isLoggedIn, wrapAsync(listingController.generateReceiptPdf));
+router.post("/reservations/:sessionId/cancel", isLoggedIn, wrapAsync(listingController.cancelReservation));
+
 
 router.route("/:id")
   .get(wrapAsync(listingController.showListing))
@@ -29,6 +35,8 @@ router.route("/:id")
     upload.single("listing[image]"),
     validateListing, wrapAsync(listingController.updateListing))
   .delete(isLoggedIn, isOwner, wrapAsync(listingController.destroyListing));
+
+router.get("/:id/payment", isLoggedIn, wrapAsync(listingController.renderPaymentPage));
 
 
 //Edit Route
