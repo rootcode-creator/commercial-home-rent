@@ -319,77 +319,13 @@ module.exports.generateReceiptPdf = async (req, res) => {
     return res.redirect('/listings/reservations');
   }
 
-  // Render the receipt to HTML first
-  const host = req.get('host');
-  console.log('Generating PDF for session', sessionId, 'user', req.user && req.user._id);
-  res.render('listings/receipt.ejs', { record, listing, host }, async (err, html) => {
-    if (err) {
-      console.error('Render error for PDF:', err);
-      res.status(500).type('text/plain').send('Render error for PDF');
-      return;
-    }
-    console.log('Rendered HTML length', html && html.length);
+  const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId });
+  const streamed = await streamPdfFile(res, fallbackPath, sessionId);
+  if (streamed) {
+    return;
+  }
 
-      const { puppeteer, usingCore } = await loadPuppeteer();
-      let execPath = process.env.PUPPETEER_EXECUTABLE_PATH || null;
-
-      if (!puppeteer) {
-        req.flash('error', 'Server PDF generator not available. Install puppeteer or set PUPPETEER_EXECUTABLE_PATH with puppeteer-core.');
-        return res.redirect('/listings/reservations');
-      }
-
-      const useFallbackPdf = String(process.env.VERCEL || '') === '1';
-
-      if (!useFallbackPdf) {
-        try {
-          if (!execPath) {
-            const chromium = require('@sparticuz/chromium');
-            execPath = await chromium.executablePath();
-          }
-
-          let browser;
-          try {
-            const launchOpts = { args: ['--no-sandbox', '--disable-setuid-sandbox'] };
-            if (usingCore && execPath) {
-              launchOpts.executablePath = execPath;
-            }
-
-            browser = await puppeteer.launch(launchOpts);
-            const page = await browser.newPage();
-            await page.setContent(html, { waitUntil: 'domcontentloaded', timeout: 0 });
-            await page.waitForFunction(() => Array.from(document.images).every((img) => img.complete), { timeout: 30000 });
-
-            const tmpPath = path.join(os.tmpdir(), `receipt-${sessionId}-${Date.now()}.pdf`);
-            await page.pdf({
-              path: tmpPath,
-              format: 'A4',
-              printBackground: true,
-              margin: { top: '20mm', bottom: '20mm', left: '20mm', right: '20mm' },
-            });
-            await browser.close();
-
-            const streamed = await streamPdfFile(res, tmpPath, sessionId);
-            if (streamed) {
-              return;
-            }
-          } catch (browserErr) {
-            if (browser) await browser.close().catch(() => {});
-            console.error('Chromium PDF generation failed, using fallback:', browserErr);
-          }
-        } catch (chromiumErr) {
-          console.error('Chromium path unavailable, using fallback PDF:', chromiumErr);
-        }
-      }
-
-      const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId });
-      const streamed = await streamPdfFile(res, fallbackPath, sessionId);
-      if (streamed) {
-        return;
-      }
-
-      res.status(500).type('text/plain').send('PDF generation failed');
-      return;
-  });
+  res.status(500).type('text/plain').send('PDF generation failed');
 };
 
 

@@ -43,7 +43,7 @@ const buildBookingEmail = async (record) => {
   const subtotal = total; // no itemized breakdown available here
   const tax = "0.00";
   const paymentMethod = Array.isArray(record.paymentMethodTypes) && record.paymentMethodTypes.length > 0 ? record.paymentMethodTypes[0] : "card";
-  const appOrigin = (process.env.BASEURL || process.env.APP_ORIGIN || "").replace(/\/$/, "");
+  const appOrigin = (process.env.BASEURL || process.env.APP_ORIGIN || "https://home-rent.kawserahmed.tech").replace(/\/$/, "");
   const bookingUrl = `${appOrigin}/listings/reservations`;
   const supportEmail =
     process.env.SUPPORT_EMAIL ||
