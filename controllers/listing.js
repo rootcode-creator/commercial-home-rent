@@ -319,13 +319,81 @@ module.exports.generateReceiptPdf = async (req, res) => {
     return res.redirect('/listings/reservations');
   }
 
-  const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId });
-  const streamed = await streamPdfFile(res, fallbackPath, sessionId);
-  if (streamed) {
-    return;
-  }
+  const host = req.get('host');
+  res.render('listings/receipt.ejs', { record, listing, host }, async (err, html) => {
+    if (err) {
+      console.error('Render error for PDF:', err);
+      const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId });
+      const streamed = await streamPdfFile(res, fallbackPath, sessionId);
+      if (streamed) {
+        return;
+      }
 
-  res.status(500).type('text/plain').send('PDF generation failed');
+      res.status(500).type('text/plain').send('Render error for PDF');
+      return;
+    }
+
+    const { puppeteer, usingCore } = await loadPuppeteer();
+    const useFallbackPdf = String(process.env.VERCEL || '') === '1';
+
+    if (!puppeteer) {
+      const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId });
+      const streamed = await streamPdfFile(res, fallbackPath, sessionId);
+      if (streamed) {
+        return;
+      }
+
+      res.status(500).type('text/plain').send('PDF generation failed');
+      return;
+    }
+
+    if (!useFallbackPdf) {
+      let browser;
+      try {
+        let execPath = process.env.PUPPETEER_EXECUTABLE_PATH || null;
+        if (!execPath && usingCore) {
+          const chromium = await import('@sparticuz/chromium');
+          execPath = await chromium.default.executablePath();
+        }
+
+        const launchOpts = { args: ['--no-sandbox', '--disable-setuid-sandbox'] };
+        if (usingCore && execPath) {
+          launchOpts.executablePath = execPath;
+        }
+
+        browser = await puppeteer.launch(launchOpts);
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0', timeout: 0 });
+        await page.emulateMediaType('print');
+
+        const tmpPath = path.join(os.tmpdir(), `receipt-${sessionId}-${Date.now()}.pdf`);
+        await page.pdf({
+          path: tmpPath,
+          format: 'A4',
+          printBackground: true,
+          preferCSSPageSize: true,
+          margin: { top: '12mm', bottom: '12mm', left: '12mm', right: '12mm' },
+        });
+        await browser.close();
+
+        const streamed = await streamPdfFile(res, tmpPath, sessionId);
+        if (streamed) {
+          return;
+        }
+      } catch (browserErr) {
+        if (browser) await browser.close().catch(() => {});
+        console.error('Chromium PDF generation failed, using fallback:', browserErr);
+      }
+    }
+
+    const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId });
+    const streamed = await streamPdfFile(res, fallbackPath, sessionId);
+    if (streamed) {
+      return;
+    }
+
+    res.status(500).type('text/plain').send('PDF generation failed');
+  });
 };
 
 

@@ -45,10 +45,12 @@
   <style>
     /* Print stylesheet: hide everything except .print-area */
     @media print {
+      @page { size: A4; margin: 12mm; }
       body * { visibility: hidden; }
       .print-area, .print-area * { visibility: visible; }
-      .print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 12mm; }
+      .print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
       .no-print { display: none !important; }
+      .table { page-break-inside: avoid; }
     }
   </style>
   <div class="row mb-4">
