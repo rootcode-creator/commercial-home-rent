@@ -38,7 +38,7 @@ const isServerlessRuntime =
   process.env.VERCEL === "1" ||
   !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 const useMongoSessionStore =
-  process.env.USE_MONGO_SESSION === "true" && !isServerlessRuntime;
+  process.env.USE_MONGO_SESSION === "true" && !!dbUrl;
 
 main()
   .then(() => {
@@ -60,6 +60,10 @@ app.use(express.json());
 app.use(methodOverride("_method"));
 app.engine('ejs', ejsMate);
 app.use(express.static(path.join(__dirname, "/public")));
+
+if (isServerlessRuntime || process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
 
 app.use((req, res, next) => {
   const originalSend = res.send.bind(res);
@@ -118,6 +122,8 @@ const sessionOptions = {
     expires: Date.now() + 7 * 24 * 60 * 60 * 1000,
     maxAge: 7 * 24 * 60 * 60 * 1000,
     httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
   },
 };
 
