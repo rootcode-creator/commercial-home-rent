@@ -67,8 +67,8 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
   const displayEmail = record.customerEmail || 'N/A';
   const displayLocation = `${record.listingLocation || listing?.location || ''}${record.listingCountry || listing?.country ? `, ${record.listingCountry || listing?.country}` : ''}`.trim();
   const displayTitle = record.listingTitle || listing?.title || 'Booked listing';
-  const siteOrigin = (process.env.BASEURL || process.env.APP_ORIGIN || 'http://localhost:8080').replace(/\/$/, '');
-  const siteLabel = siteOrigin.replace(/^https?:\/\//, '');
+  const siteOrigin = (process.env.BASEURL || process.env.APP_ORIGIN || '').replace(/\/$/, '');
+  const siteLabel = siteOrigin ? siteOrigin.replace(/^https?:\/\//, '') : '';
 
   const getDisplayUsdAmount = (valueRecord) => {
     const usd = Number(valueRecord?.usdAmountTotal);
@@ -125,8 +125,10 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
 
   doc.fillColor('#111827').font('Helvetica-Bold').fontSize(18).text('Invoice', left + logoWidth, y - 2);
   doc.font('Helvetica-Bold').fontSize(10.5).text('Wanderlust Private Limited', left + logoWidth, y + 18);
-  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Website:', left, y - 2, { width: contentWidth, align: 'right' });
-  doc.text(siteLabel, left, y + 12, { width: contentWidth, align: 'right' });
+  if (siteLabel) {
+    doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Website:', left, y - 2, { width: contentWidth, align: 'right' });
+    doc.text(siteLabel, left, y + 12, { width: contentWidth, align: 'right' });
+  }
 
   y += 72;
 
