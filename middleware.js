@@ -70,3 +70,17 @@ module.exports.isReviewAuthor = async (req, res, next) => {
   }
   return next();
 };
+
+module.exports.blockOwnerReview = async (req, res, next) => {
+  let { id } = req.params;
+  let listing = await Listing.findById(id);
+  if (!listing) {
+    req.flash("error", "Listing you requested does not exist!");
+    return res.redirect("/listings");
+  }
+  if (listing.owner && listing.owner.equals(res.locals.currUser._id)) {
+    req.flash("error", "Listing owners cannot review their own listing.");
+    return res.redirect(`/listings/${id}`);
+  }
+  return next();
+};

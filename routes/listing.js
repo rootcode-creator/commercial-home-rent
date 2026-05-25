@@ -22,6 +22,8 @@ router.route("/")
 //New Route
 router.get("/new", isLoggedIn, listingController.renderNewForm);
 
+router.get("/mylistings", isLoggedIn, wrapAsync(listingController.myListings));
+
 router.get("/reservations", isLoggedIn, wrapAsync(listingController.renderReservationsPage));
 
 router.get("/reservations/:sessionId/receipt", isLoggedIn, wrapAsync(listingController.renderReceipt));

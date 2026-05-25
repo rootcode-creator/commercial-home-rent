@@ -9,7 +9,7 @@
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse bg-body-dark" id="navbarNavAltMarkup">
-        <div class="navbar-nav">
+        <div class="navbar-nav nav-primary">
           <a class="nav-link" href="/listings">Explore</a>
           <% if (currUser) { %>
             <a class="nav-link" href="/listings/reservations">Reservations</a>
@@ -17,8 +17,8 @@
         </div>
 
 
-        <div class="navbar-nav ms-auto">
-          <form class="d-flex" role="search" action="/listings" method="GET">
+        <div class="navbar-nav nav-search">
+          <form class="d-flex nav-search-form" role="search" action="/listings" method="GET">
             <input class="form-control me-2 search-inp" type="search" name="q" placeholder="Search destinations" value="<%= searchQuery || '' %>">
             <% if (typeof selectedCategory !== 'undefined' && selectedCategory) { %>
               <input type="hidden" name="category" value="<%= selectedCategory %>">
@@ -27,7 +27,7 @@
           </form>
         </div>
 
-        <div class="navbar-nav  ms-auto">
+        <div class="navbar-nav nav-actions ms-auto">
           <a class="nav-link" href="/listings/new">Airbnb your home</a>
           <% if (!currUser) { %>
           <a class="nav-link"  href="/signup"><b>Sign up</b></a>
@@ -35,11 +35,19 @@
           <% } %> <% if (currUser) { %>
           <div class="nav-item dropdown">
             <a class="nav-link dropdown-toggle nav-avatar" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-              <span class="nav-avatar-circle"><%= (currUser.username || "U").charAt(0).toUpperCase() %></span>
+              <span class="nav-avatar-circle">
+                <% if (currUser.avatar && currUser.avatar.url) { %>
+                  <img src="<%= currUser.avatar.url %>" alt="Profile" class="nav-avatar-image" />
+                <% } else { %>
+                  <%= (currUser.username || "U").charAt(0).toUpperCase() %>
+                <% } %>
+              </span>
             </a>
             <ul class="dropdown-menu dropdown-menu-end">
               <li><span class="dropdown-item-text">Signed in as <strong><%= currUser.username %></strong></span></li>
               <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="/listings/mylistings">My listings</a></li>
+              <li><a class="dropdown-item" href="/profile/edit">Edit profile</a></li>
               <li><a class="dropdown-item" href="/logout">Log out</a></li>
             </ul>
           </div>

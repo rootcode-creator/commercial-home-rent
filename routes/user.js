@@ -3,8 +3,11 @@ const router = express.Router();
 const User = require("../models/user.js");
 const wrapAsync = require("../utils/wrapAsync.js");
 const passport = require("passport");
-const { saveRedirectUrl } = require("../middleware.js");
+const { saveRedirectUrl, isLoggedIn } = require("../middleware.js");
 const userControllers = require("../controllers/users.js");
+const multer  = require('multer');
+const { storage } = require("../cloudConfig.js");
+const upload = multer({ storage });
 
 //testing
 router.get("/", userControllers.root);
@@ -26,5 +29,14 @@ router.route("/login")
   .post(saveRedirectUrl, passport.authenticate("local", { failureRedirect: "/login", failureFlash: true, }), userControllers.login);
 
 router.get("/logout", userControllers.logout);
+
+router.route("/users/profile/edit")
+  .get(isLoggedIn, userControllers.renderEditProfileForm)
+  .post(isLoggedIn, upload.single("profile[image]"), wrapAsync(userControllers.updateProfile));
+
+
+router.route("/profile/edit")
+  .get(isLoggedIn, userControllers.renderEditProfileForm)
+  .post(isLoggedIn, upload.single("profile[image]"), wrapAsync(userControllers.updateProfile));
 
 module.exports = router;

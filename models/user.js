@@ -8,6 +8,28 @@ const userSchema = new Schema({
         type: String,
         required: true,
     },
+    displayName: {
+        type: String,
+        default: "",
+    },
+    avatar: {
+        url: {
+            type: String,
+            default: "",
+        },
+        filename: {
+            type: String,
+            default: "",
+        },
+    },
+    city: {
+        type: String,
+        default: "",
+    },
+    joinedAt: {
+        type: Date,
+        default: Date.now,
+    },
 });
 
 userSchema.plugin(passportLocalMongoose);

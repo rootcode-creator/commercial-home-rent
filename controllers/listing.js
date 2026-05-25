@@ -321,6 +321,65 @@ module.exports.index = async (req, res) => {
   });
 };
 
+module.exports.myListings = async (req, res) => {
+  const allListings = await Listing.find({ owner: req.user._id }).lean();
+  const listingIds = allListings.map((listing) => String(listing._id));
+  let orderCounts = new Map();
+  let orderTotals = new Map();
+  let orderCurrencies = new Map();
+
+  if (listingIds.length > 0) {
+    const orderFilters = {
+      status: "paid",
+      paymentStatus: "paid",
+      lastEventType: { $in: ["checkout.session.completed", "checkout.session.async_payment_succeeded"] },
+      listingId: { $in: listingIds },
+    };
+
+    const orders = await PaymentRecord.find(orderFilters)
+      .select("listingId amountTotal localAmountTotal localCurrency currency")
+      .lean();
+
+    const counts = {};
+    const totals = {};
+    const currencies = {};
+
+    orders.forEach((record) => {
+      const id = String(record.listingId || "");
+      if (!id) return;
+      counts[id] = (counts[id] || 0) + 1;
+
+      const amount = Number(record.localAmountTotal ?? record.amountTotal ?? 0);
+      totals[id] = (totals[id] || 0) + (Number.isFinite(amount) ? amount : 0);
+
+      const currency = String(record.localCurrency || record.currency || "").toUpperCase();
+      if (!currencies[id]) {
+        currencies[id] = currency || "";
+      } else if (currency && currencies[id] !== currency) {
+        currencies[id] = "MULTI";
+      }
+    });
+
+    orderCounts = new Map(Object.entries(counts));
+    orderTotals = new Map(Object.entries(totals));
+    orderCurrencies = new Map(Object.entries(currencies));
+  }
+
+  const listingsWithOrders = allListings.map((listing) => {
+    const listingId = String(listing._id);
+    return {
+      ...listing,
+      orderCount: orderCounts.get(listingId) || 0,
+      totalPaid: orderTotals.get(listingId) || 0,
+      totalPaidCurrency: orderCurrencies.get(listingId) || "",
+    };
+  });
+
+  return res.render("listings/mylistings.ejs", {
+    allListings: listingsWithOrders,
+  });
+};
+
 module.exports.renderNewForm = (req, res) => {
   return res.render("listings/new.ejs");
 };
@@ -447,13 +506,21 @@ module.exports.createListing = async (req, res, next) => {
     limit: 1,
   })
     .send();
+
+  const geometry = response.body && response.body.features && response.body.features[0]
+    ? response.body.features[0].geometry
+    : null;
+  if (!geometry) {
+    req.flash("error", "Location not found. Please enter a valid location.");
+    return res.redirect("/listings/new");
+  }
   
   let url = req.file.path;
   let filename = req.file.filename;
   let newListing = new Listing(req.body.listing);
   newListing.owner = req.user._id;
   newListing.image = { url, filename };
-  newListing.geometry = response.body.features[0].geometry;
+  newListing.geometry = geometry;
 
   let savedListing = await newListing.save();
   console.log(savedListing);

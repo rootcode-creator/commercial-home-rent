@@ -1,0 +1,68 @@
+<% layout("/layouts/boilerplate") -%>
+
+<div class="container mt-5 mb-5">
+  <%
+    const formatNumber = (value) => Number(value || 0).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  %>
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+      <h2 class="mb-1">My Listings</h2>
+      <p class="text-muted mb-0">Listings created from your account.</p>
+    </div>
+    <a href="/listings/new" class="btn btn-outline-dark">Create Listing</a>
+  </div>
+
+  <% if (allListings.length === 0) { %>
+    <div class="alert alert-light border">You have not created any listings yet.</div>
+  <% } else { %>
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Listing</th>
+            <th>Location</th>
+            <th>Price</th>
+            <th>Orders</th>
+            <th>Total Paid</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% allListings.forEach(function(listing) { %>
+            <tr>
+              <td><%= listing.title %></td>
+              <td>
+                <%= listing.location || "Location unavailable" %>
+                <% if (listing.country) { %>, <%= listing.country %><% } %>
+              </td>
+              <td>&#2547; <%= listing.price.toLocaleString("en-BN") %> /night</td>
+              <td><%= listing.orderCount || 0 %></td>
+              <td>
+                <% if (listing.orderCount > 0 && listing.totalPaid > 0) { %>
+                  <% const currencyLabel = listing.totalPaidCurrency === "MULTI" ? "Multiple" : (listing.totalPaidCurrency || ""); %>
+                  <%= currencyLabel ? `${currencyLabel} ${formatNumber(listing.totalPaid)}` : formatNumber(listing.totalPaid) %>
+                <% } else { %>
+                  <span class="text-muted">N/A</span>
+                <% } %>
+              </td>
+              <td><span class="badge text-bg-success">Active</span></td>
+              <td>
+                <div class="d-flex align-items-center gap-1 flex-nowrap reservation-actions">
+                  <a href="/listings/<%= listing._id %>" class="btn btn-sm btn-outline-dark">View</a>
+                  <a href="/listings/<%= listing._id %>/edit" class="btn btn-sm btn-outline-dark">Edit</a>
+                  <form action="/listings/<%= listing._id %>?_method=DELETE" method="post" class="m-0">
+                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this listing?');">Delete</button>
+                  </form>
+                </div>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>
