@@ -48,7 +48,7 @@ const loadPuppeteer = async () => {
   }
 };
 
-const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
+const buildReceiptPdfFallback = async ({ record, listing, sessionId, host }) => {
   const tmpPath = path.join(os.tmpdir(), `receipt-${sessionId}-${Date.now()}.pdf`);
   const doc = new PDFDocument({ size: 'A4', margin: 48 });
   const stream = fs.createWriteStream(tmpPath);
@@ -68,7 +68,10 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
   const displayLocation = `${record.listingLocation || listing?.location || ''}${record.listingCountry || listing?.country ? `, ${record.listingCountry || listing?.country}` : ''}`.trim();
   const displayTitle = record.listingTitle || listing?.title || 'Booked listing';
   const siteOrigin = (process.env.BASEURL || process.env.APP_ORIGIN || '').replace(/\/$/, '');
-  const siteLabel = siteOrigin ? siteOrigin.replace(/^https?:\/\//, '') : '';
+  const hostLabel = host ? String(host).trim() : '';
+  const siteLabel = siteOrigin
+    ? siteOrigin.replace(/^https?:\/\//, '')
+    : hostLabel;
 
   const getDisplayUsdAmount = (valueRecord) => {
     const usd = Number(valueRecord?.usdAmountTotal);
@@ -426,7 +429,8 @@ module.exports.generateReceiptPdf = async (req, res) => {
     return res.redirect('/listings/reservations');
   }
 
-  const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId });
+  const host = req.get('host');
+  const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId, host });
   const streamed = await streamPdfFile(res, fallbackPath, sessionId);
   if (streamed) {
     return;
