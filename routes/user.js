@@ -9,6 +9,14 @@ const userControllers = require("../controllers/users.js");
 //testing
 router.get("/", userControllers.root);
 
+router.get("/terms", (req, res) => {
+  res.render("pages/terms");
+});
+
+router.get("/privacy", (req, res) => {
+  res.render("pages/privacy");
+});
+
 router.route("/signup")
   .get(userControllers.renderSignUpForm)
   .post(wrapAsync(userControllers.signup));
