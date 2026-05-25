@@ -2,6 +2,8 @@ const stripeFactory = require("stripe");
 const { Resend } = require("resend");
 const PaymentAttempt = require("../models/paymentAttempt.js");
 const PaymentRecord = require("../models/paymentRecord.js");
+const Listing = require("../models/listing.js");
+const MyListing = require("../models/myListing.js");
 
 const getStripe = () => {
   const secret =
@@ -204,10 +206,70 @@ const upsertPaymentAttempt = async ({ sessionId, paymentIntentId, status, paymen
   }
 };
 
+const updateMyListingTotals = async (record) => {
+  if (!record || !record.listingId) {
+    return;
+  }
+
+  const listingId = String(record.listingId);
+  const amount = Number(record.localAmountTotal ?? record.amountTotal ?? 0);
+  const currency = String(record.localCurrency || record.currency || "").toUpperCase();
+
+  let myListing = await MyListing.findOne({ listingId }).lean();
+  if (!myListing) {
+    const listing = await Listing.findById(listingId)
+      .select("owner title price location")
+      .populate("owner")
+      .lean();
+    if (!listing) {
+      return;
+    }
+
+    const ownerEmail = listing.owner && listing.owner.email ? String(listing.owner.email).trim() : "";
+
+    await MyListing.create({
+      userId: listing.owner && listing.owner._id ? listing.owner._id : listing.owner,
+      userEmail: ownerEmail,
+      listingId: listing._id,
+      listingName: listing.title,
+      price: listing.price,
+      location: listing.location,
+      totalOrders: 0,
+      totalPaid: 0,
+      totalPaidCurrency: currency || "",
+      status: "active",
+    });
+
+    myListing = await MyListing.findOne({ listingId }).lean();
+  }
+
+  let nextCurrency = myListing?.totalPaidCurrency || "";
+  if (!nextCurrency && currency) {
+    nextCurrency = currency;
+  } else if (currency && nextCurrency && nextCurrency !== currency) {
+    nextCurrency = "MULTI";
+  }
+
+  await MyListing.updateOne(
+    { listingId },
+    {
+      $inc: {
+        totalOrders: 1,
+        totalPaid: Number.isFinite(amount) ? amount : 0,
+      },
+      $set: {
+        totalPaidCurrency: nextCurrency,
+      },
+    }
+  );
+};
+
 const upsertPaymentRecord = async ({ session, status, eventType }) => {
   if (!session?.id) {
     return;
   }
+
+  const existingRecord = await PaymentRecord.findOne({ sessionId: session.id }).lean();
 
   const record = {
     sessionId: session.id,
@@ -252,11 +314,17 @@ const upsertPaymentRecord = async ({ session, status, eventType }) => {
     lastEventType: eventType,
   };
 
-  return PaymentRecord.findOneAndUpdate(
+  const savedRecord = await PaymentRecord.findOneAndUpdate(
     { sessionId: session.id },
     { $set: record },
     { upsert: true, new: true }
   );
+
+  if (status === "paid" && (!existingRecord || existingRecord.status !== "paid")) {
+    await updateMyListingTotals(savedRecord);
+  }
+
+  return savedRecord;
 };
 
 const handleStripeWebhook = async (req, res) => {

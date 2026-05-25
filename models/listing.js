@@ -39,6 +39,12 @@ const listingSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: "User",
     },
+    status: {
+        type: String,
+        enum: ["active", "inactive"],
+        default: "active",
+        index: true,
+    },
     geometry: {
         type: {
             type: String, // Don't do `{ location: { type: String } }`

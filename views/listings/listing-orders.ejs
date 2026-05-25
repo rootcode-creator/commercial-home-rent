@@ -1,0 +1,62 @@
+<% layout("/layouts/boilerplate") -%>
+
+<%
+  const formatMoney = (value, currency) => {
+    const amount = Number(value || 0);
+    const code = String(currency || "BDT").toUpperCase();
+    return amount.toLocaleString("en-US", { style: "currency", currency: code });
+  };
+%>
+
+<div class="container mt-5 mb-5">
+  <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+      <h2 class="mb-1">Orders for <%= listing.title %></h2>
+      <p class="text-muted mb-0"><%= listing.location %></p>
+    </div>
+    <a href="/listings/mylistings" class="btn btn-outline-dark">Back to My Listings</a>
+  </div>
+
+  <% if (!orders || orders.length === 0) { %>
+    <div class="alert alert-light border">No orders for this listing yet.</div>
+  <% } else { %>
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Customer</th>
+            <th>Email</th>
+            <th>Booked For</th>
+            <th>Amount</th>
+            <th>Paid At</th>
+            <th>Payment Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% orders.forEach(function(order) { %>
+            <tr>
+              <td><%= order.customerName || "Guest" %></td>
+              <td><%= order.customerEmail || "N/A" %></td>
+              <td><%= order.bookingDays || 1 %> day(s)</td>
+              <td>
+                <% const amountValue = order.localAmountTotal ?? order.amountTotal ?? 0; %>
+                <% const currency = order.localCurrency || order.currency || "BDT"; %>
+                <%= formatMoney(amountValue, currency) %>
+              </td>
+              <td><%= order.reservationDate ? new Date(order.reservationDate).toLocaleString() : "N/A" %></td>
+              <td>
+                <% if (String(order.status || "").toLowerCase() === "paid") { %>
+                  <span class="badge text-bg-success">Paid</span>
+                <% } else if (String(order.status || "").toLowerCase() === "failed") { %>
+                  <span class="badge text-bg-danger">Failed</span>
+                <% } else { %>
+                  <span class="badge text-bg-secondary"><%= order.status || "Unknown" %></span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  <% } %>
+</div>

@@ -27,36 +27,49 @@
             <th>Price</th>
             <th>Orders</th>
             <th>Total Paid</th>
-            <th>Status</th>
+            <th>Booking Status</th>
+            <th>Listing Status</th>
             <th>Action</th>
           </tr>
         </thead>
         <tbody>
           <% allListings.forEach(function(listing) { %>
             <tr>
-              <td><%= listing.title %></td>
+                        <td><%= listing.listingName %></td>
               <td>
                 <%= listing.location || "Location unavailable" %>
-                <% if (listing.country) { %>, <%= listing.country %><% } %>
               </td>
-              <td>&#2547; <%= listing.price.toLocaleString("en-BN") %> /night</td>
-              <td><%= listing.orderCount || 0 %></td>
+                        <td>&#2547; <%= listing.price.toLocaleString("en-BN") %> /night</td>
+                        <td><%= listing.totalOrders || 0 %></td>
               <td>
-                <% if (listing.orderCount > 0 && listing.totalPaid > 0) { %>
+                          <% if (listing.totalOrders > 0 && listing.totalPaid > 0) { %>
                   <% const currencyLabel = listing.totalPaidCurrency === "MULTI" ? "Multiple" : (listing.totalPaidCurrency || ""); %>
                   <%= currencyLabel ? `${currencyLabel} ${formatNumber(listing.totalPaid)}` : formatNumber(listing.totalPaid) %>
                 <% } else { %>
                   <span class="text-muted">N/A</span>
                 <% } %>
               </td>
-              <td><span class="badge text-bg-success">Active</span></td>
+              <td>
+                <% if (listing.bookingRange) { %>
+                  <% const startDate = new Date(listing.bookingRange.start).toLocaleDateString(); %>
+                  <% const endDate = new Date(listing.bookingRange.end).toLocaleDateString(); %>
+                  <span class="badge text-bg-success">Booked</span>
+                  <div class="text-muted small">(<%= startDate %> - <%= endDate %>)</div>
+                <% } else { %>
+                  <span class="badge text-bg-secondary">Not booked</span>
+                <% } %>
+              </td>
+                        <td>
+                          <% if (listing.status === "inactive") { %>
+                            <span class="badge text-bg-secondary">Inactive</span>
+                          <% } else { %>
+                            <span class="badge text-bg-success">Active</span>
+                          <% } %>
+                        </td>
               <td>
                 <div class="d-flex align-items-center gap-1 flex-nowrap reservation-actions">
-                  <a href="/listings/<%= listing._id %>" class="btn btn-sm btn-outline-dark">View</a>
-                  <a href="/listings/<%= listing._id %>/edit" class="btn btn-sm btn-outline-dark">Edit</a>
-                  <form action="/listings/<%= listing._id %>?_method=DELETE" method="post" class="m-0">
-                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Delete this listing?');">Delete</button>
-                  </form>
+                            <a href="/listings/<%= listing.listingId %>" class="btn btn-sm btn-outline-dark">View</a>
+                  <a href="/listings/mylistings/<%= listing.listingId %>/orders" class="btn btn-sm btn-outline-dark">Orders</a>
                 </div>
               </td>
             </tr>

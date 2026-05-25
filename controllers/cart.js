@@ -20,6 +20,11 @@ module.exports.renderCartPage = async (req, res) => {
     return res.redirect("/listings");
   }
 
+  if (listing.status === "inactive") {
+    req.flash("error", "Listing is inactive.");
+    return res.redirect("/listings");
+  }
+
   if (listing.owner && listing.owner._id && listing.owner._id.equals(req.user._id)) {
     req.flash("error", "You cannot pay for your own listing");
     return res.redirect(`/listings/${id}`);
@@ -35,6 +40,10 @@ module.exports.createCheckoutSession = async (req, res) => {
   const listing = await Listing.findById(listingId);
   if (!listing) {
     return res.status(404).json({ error: "Listing not found" });
+  }
+
+  if (listing.status === "inactive") {
+    return res.status(400).json({ error: "Listing is inactive" });
   }
 
   if (!process.env.STRIPE_SECRET_KEY) {

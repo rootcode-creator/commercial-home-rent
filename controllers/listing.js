@@ -1,5 +1,6 @@
 const Listing = require("../models/listing.js");
 const PaymentRecord = require("../models/paymentRecord.js");
+const MyListing = require("../models/myListing.js");
 const { sendBookingCancellationEmail } = require("./webhook.js");
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const fs = require('fs');
@@ -310,7 +311,13 @@ module.exports.index = async (req, res) => {
   }
 
   const filter = conditions.length > 0 ? { $and: conditions } : {};
-  let allListings = await Listing.find(filter);
+  const combinedFilter = {
+    $and: [
+      { $or: [{ status: "active" }, { status: { $exists: false } }] },
+      filter,
+    ],
+  };
+  let allListings = await Listing.find(combinedFilter);
 
   return res.render("listings/index.ejs", {
     allListings,
@@ -322,66 +329,155 @@ module.exports.index = async (req, res) => {
 };
 
 module.exports.myListings = async (req, res) => {
-  const allListings = await Listing.find({ owner: req.user._id }).lean();
-  const listingIds = allListings.map((listing) => String(listing._id));
-  let orderCounts = new Map();
-  let orderTotals = new Map();
-  let orderCurrencies = new Map();
+  const ownedListings = await Listing.find({ owner: req.user._id }).select("title price location status").lean();
+  const ownedIds = ownedListings.map((listing) => String(listing._id));
+  const existing = await MyListing.find({ listingId: { $in: ownedIds } }).select("listingId").lean();
+  const existingIds = new Set(existing.map((item) => String(item.listingId)));
 
-  if (listingIds.length > 0) {
+  const toCreate = ownedListings
+    .filter((listing) => !existingIds.has(String(listing._id)))
+    .map((listing) => ({
+      userId: req.user._id,
+      userEmail: String(req.user.email || "").trim(),
+      listingId: listing._id,
+      listingName: listing.title,
+      price: listing.price,
+      location: listing.location,
+      totalOrders: 0,
+      totalPaid: 0,
+      totalPaidCurrency: "",
+      status: listing.status || "active",
+    }));
+
+  if (toCreate.length > 0) {
+    await MyListing.insertMany(toCreate, { ordered: false });
+  }
+
+  if (ownedIds.length > 0) {
     const orderFilters = {
       status: "paid",
       paymentStatus: "paid",
       lastEventType: { $in: ["checkout.session.completed", "checkout.session.async_payment_succeeded"] },
-      listingId: { $in: listingIds },
+      listingId: { $in: ownedIds },
     };
 
-    const orders = await PaymentRecord.find(orderFilters)
-      .select("listingId amountTotal localAmountTotal localCurrency currency")
-      .lean();
+    const summary = await PaymentRecord.aggregate([
+      { $match: orderFilters },
+      {
+        $group: {
+          _id: "$listingId",
+          totalOrders: { $sum: 1 },
+          totalPaid: {
+            $sum: {
+              $ifNull: ["$localAmountTotal", "$amountTotal"],
+            },
+          },
+          currencies: { $addToSet: { $ifNull: ["$localCurrency", "$currency"] } },
+        },
+      },
+    ]);
 
-    const counts = {};
-    const totals = {};
-    const currencies = {};
+    const summaryById = new Map(
+      summary.map((row) => {
+        const currencies = (row.currencies || []).map((c) => String(c || "").toUpperCase()).filter(Boolean);
+        let currency = "";
+        if (currencies.length === 1) {
+          currency = currencies[0];
+        } else if (currencies.length > 1) {
+          currency = "MULTI";
+        }
+        return [String(row._id), { totalOrders: row.totalOrders, totalPaid: row.totalPaid, totalPaidCurrency: currency }];
+      })
+    );
 
-    orders.forEach((record) => {
-      const id = String(record.listingId || "");
-      if (!id) return;
-      counts[id] = (counts[id] || 0) + 1;
-
-      const amount = Number(record.localAmountTotal ?? record.amountTotal ?? 0);
-      totals[id] = (totals[id] || 0) + (Number.isFinite(amount) ? amount : 0);
-
-      const currency = String(record.localCurrency || record.currency || "").toUpperCase();
-      if (!currencies[id]) {
-        currencies[id] = currency || "";
-      } else if (currency && currencies[id] !== currency) {
-        currencies[id] = "MULTI";
-      }
-    });
-
-    orderCounts = new Map(Object.entries(counts));
-    orderTotals = new Map(Object.entries(totals));
-    orderCurrencies = new Map(Object.entries(currencies));
+    await Promise.all(
+      ownedIds.map((listingId) => {
+        const summaryRow = summaryById.get(listingId) || { totalOrders: 0, totalPaid: 0, totalPaidCurrency: "" };
+        return MyListing.updateOne(
+          { listingId },
+          {
+            $set: {
+              totalOrders: summaryRow.totalOrders,
+              totalPaid: summaryRow.totalPaid,
+              totalPaidCurrency: summaryRow.totalPaidCurrency,
+            },
+          }
+        );
+      })
+    );
   }
 
-  const listingsWithOrders = allListings.map((listing) => {
-    const listingId = String(listing._id);
+  const allListings = await MyListing.find({ userId: req.user._id })
+    .sort({ createdAt: -1 })
+    .lean();
+  let bookingRanges = new Map();
+
+  if (ownedIds.length > 0) {
+    const bookingFilters = {
+      status: "paid",
+      paymentStatus: "paid",
+      lastEventType: { $in: ["checkout.session.completed", "checkout.session.async_payment_succeeded"] },
+      listingId: { $in: ownedIds },
+      reservationDate: { $ne: null },
+    };
+
+    const bookingRecords = await PaymentRecord.find(bookingFilters)
+      .select("listingId reservationDate bookingDays")
+      .lean();
+
+    const now = Date.now();
+    bookingRecords.forEach((record) => {
+      if (!record.reservationDate) return;
+      const listingId = String(record.listingId || "");
+      if (!listingId) return;
+
+      const start = new Date(record.reservationDate).getTime();
+      const days = Math.max(1, Number(record.bookingDays) || 1);
+      const end = start + days * 24 * 60 * 60 * 1000;
+
+      if (now >= start && now < end) {
+        bookingRanges.set(listingId, {
+          start,
+          end: end - 1,
+        });
+      }
+    });
+  }
+
+  const listingsWithBooking = allListings.map((listing) => {
+    const listingId = String(listing.listingId || "");
+    const range = bookingRanges.get(listingId);
     return {
       ...listing,
-      orderCount: orderCounts.get(listingId) || 0,
-      totalPaid: orderTotals.get(listingId) || 0,
-      totalPaidCurrency: orderCurrencies.get(listingId) || "",
+      bookingRange: range || null,
     };
   });
 
-  return res.render("listings/mylistings.ejs", {
-    allListings: listingsWithOrders,
-  });
+  return res.render("listings/mylistings.ejs", { allListings: listingsWithBooking });
 };
 
 module.exports.renderNewForm = (req, res) => {
   return res.render("listings/new.ejs");
+};
+
+module.exports.renderListingOrders = async (req, res) => {
+  const { id } = req.params;
+  const listing = await Listing.findById(id).populate("owner").lean();
+  if (!listing) {
+    req.flash("error", "Listing you requested does not exist!");
+    return res.redirect("/listings/mylistings");
+  }
+
+  if (!listing.owner || String(listing.owner._id) !== String(req.user._id)) {
+    req.flash("error", "You do not have access to this listing's orders.");
+    return res.redirect("/listings/mylistings");
+  }
+
+  const orders = await PaymentRecord.find({ listingId: String(listing._id) })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return res.render("listings/listing-orders.ejs", { listing, orders });
 };
 
 module.exports.showListing = async (req, res) => {
@@ -391,6 +487,10 @@ module.exports.showListing = async (req, res) => {
     .populate("owner");
   if (!listing) {
     req.flash("error", "Listing you requested does not exist!");
+    return res.redirect("/listings");
+  }
+  if (listing.status === "inactive") {
+    req.flash("error", "Listing is inactive.");
     return res.redirect("/listings");
   }
   return res.render("listings/show.ejs", { listing });
@@ -523,6 +623,26 @@ module.exports.createListing = async (req, res, next) => {
   newListing.geometry = geometry;
 
   let savedListing = await newListing.save();
+  await MyListing.findOneAndUpdate(
+    { listingId: savedListing._id },
+    {
+      $set: {
+        userId: req.user._id,
+        userEmail: String(req.user.email || "").trim(),
+        listingId: savedListing._id,
+        listingName: savedListing.title,
+        price: savedListing.price,
+        location: savedListing.location,
+        status: "active",
+      },
+      $setOnInsert: {
+        totalOrders: 0,
+        totalPaid: 0,
+        totalPaidCurrency: "",
+      },
+    },
+    { upsert: true, new: true }
+  );
   console.log(savedListing);
 
   req.flash("success", "New Listing Created!");
@@ -545,7 +665,7 @@ module.exports.renderEditForm = async (req, res) => {
 
 module.exports.updateListing = async (req, res) => {
   let { id } = req.params;
-  let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
+  let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing }, { new: true });
 
   if (typeof req.file != "undefined") {
     let url = req.file.path;
@@ -554,6 +674,17 @@ module.exports.updateListing = async (req, res) => {
     await listing.save();
   }
 
+  await MyListing.findOneAndUpdate(
+    { listingId: listing._id },
+    {
+      $set: {
+        listingName: listing.title,
+        price: listing.price,
+        location: listing.location,
+      },
+    }
+  );
+
   req.flash("success", "Listing Updated!");
   return res.redirect(`/listings/${id}`);
 };
@@ -561,9 +692,19 @@ module.exports.updateListing = async (req, res) => {
 
 module.exports.destroyListing = async (req, res) => {
   let { id } = req.params;
-  await Listing.findByIdAndDelete(id);
-  req.flash("success", "Listing Deleted!");
-  return res.redirect("/listings");
+  const listing = await Listing.findByIdAndUpdate(id, { status: "inactive" }, { new: true });
+  if (!listing) {
+    req.flash("error", "Listing you requested does not exist!");
+    return res.redirect("/listings");
+  }
+
+  await MyListing.findOneAndUpdate(
+    { listingId: listing._id },
+    { $set: { status: "inactive" } }
+  );
+
+  req.flash("success", "Listing marked as inactive.");
+  return res.redirect("/listings/mylistings");
 };
 
 

@@ -24,6 +24,8 @@ router.get("/new", isLoggedIn, listingController.renderNewForm);
 
 router.get("/mylistings", isLoggedIn, wrapAsync(listingController.myListings));
 
+router.get("/mylistings/:id/orders", isLoggedIn, wrapAsync(listingController.renderListingOrders));
+
 router.get("/reservations", isLoggedIn, wrapAsync(listingController.renderReservationsPage));
 
 router.get("/reservations/:sessionId/receipt", isLoggedIn, wrapAsync(listingController.renderReceipt));
