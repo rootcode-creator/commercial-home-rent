@@ -126,7 +126,6 @@
       <div>
         <p class="receipt-title">Invoice</p>
         <div class="receipt-company">Wanderlust Private Limited</div>
-        <div class="receipt-thankyou">Thank you for your booking.</div>
       </div>
     </div>
     <div class="receipt-meta">
@@ -173,7 +172,6 @@
           <td>1</td>
           <td>
             <div><strong><%= (listing && listing.title) || record.listingTitle || 'Booked listing' %></strong></div>
-            <div class="text-muted small">Reservation for <%= qty %> day(s)</div>
           </td>
           <td style="text-align:right;"><%= formatNumber(unitLocal) %> <%= (record.originalCurrency || record.localCurrency || record.currency || '') %></td>
           <td style="text-align:center;"><%= qty %></td>
@@ -221,7 +219,6 @@
   <div class="row mt-4">
     <div class="col-6">
       <p class="mb-1">Terms & Conditions / Notes</p>
-      <p class="small text-muted">Thank you for your booking.</p>
     </div>
     <div class="col-6 text-end">
       <div style="height:60px; width:220px; margin-left:auto;">

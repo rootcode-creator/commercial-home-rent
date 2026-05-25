@@ -125,7 +125,6 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
 
   doc.fillColor('#111827').font('Helvetica-Bold').fontSize(18).text('Invoice', left + logoWidth, y - 2);
   doc.font('Helvetica-Bold').fontSize(10.5).text('Wanderlust Private Limited', left + logoWidth, y + 18);
-  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Thank you for your booking.', left + logoWidth, y + 34);
   doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Website:', left, y - 2, { width: contentWidth, align: 'right' });
   doc.text(siteLabel, left, y + 12, { width: contentWidth, align: 'right' });
 
@@ -169,7 +168,7 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
 
   doc.fillColor('#111827').font('Helvetica-Bold').fontSize(9.5);
   doc.text('SL', colX.sl + 8, tableTop + 7);
-  doc.text('Item\nDescription', colX.desc + 8, tableTop + 5);
+  doc.text('Item Description', colX.desc + 8, tableTop + 7);
   doc.text('Price', colX.price + 8, tableTop + 7);
   doc.text('Days', colX.days + 8, tableTop + 7);
   doc.text('Total', colX.total + 8, tableTop + 7);
@@ -211,7 +210,6 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
 
   y += 90;
   doc.fillColor('#111827').font('Helvetica-Bold').fontSize(10).text('Terms & Conditions / Notes', left, y);
-  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Thank you for your booking.', left, y + 16);
 
   try {
     if (fs.existsSync(signaturePath)) {
