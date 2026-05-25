@@ -33,7 +33,16 @@
           <a class="nav-link"  href="/signup"><b>Sign up</b></a>
           <a class="nav-link" href="/login"><b>Log in</b></a>
           <% } %> <% if (currUser) { %>
-          <a class="nav-link" href="/logout"><b>Log out</b></a>
+          <div class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle nav-avatar" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <span class="nav-avatar-circle"><%= (currUser.username || "U").charAt(0).toUpperCase() %></span>
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><span class="dropdown-item-text">Signed in as <strong><%= currUser.username %></strong></span></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="/logout">Log out</a></li>
+            </ul>
+          </div>
           <% } %>
         </div>
 
