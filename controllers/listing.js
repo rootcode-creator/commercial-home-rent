@@ -62,6 +62,40 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
     : 'card';
   const bookingDays = record.bookingDays || 1;
   const reservedAt = record.reservationDate ? new Date(record.reservationDate).toLocaleString() : '';
+  const invoiceId = String(record.sessionId || record.paymentIntentId || '').slice(0, 12);
+  const displayName = record.customerName || 'Guest';
+  const displayEmail = record.customerEmail || 'N/A';
+  const displayLocation = `${record.listingLocation || listing?.location || ''}${record.listingCountry || listing?.country ? `, ${record.listingCountry || listing?.country}` : ''}`.trim();
+  const displayTitle = record.listingTitle || listing?.title || 'Booked listing';
+  const siteOrigin = (process.env.BASEURL || process.env.APP_ORIGIN || 'http://localhost:8080').replace(/\/$/, '');
+  const siteLabel = siteOrigin.replace(/^https?:\/\//, '');
+
+  const getDisplayUsdAmount = (valueRecord) => {
+    const usd = Number(valueRecord?.usdAmountTotal);
+    const base = Number(valueRecord?.amountTotal);
+    const originalCurrency = String(valueRecord?.originalCurrency || valueRecord?.localCurrency || '').toUpperCase();
+
+    if (Number.isFinite(usd)) {
+      if (Number.isFinite(base) && Math.abs(usd - (base * 100)) < 0.001) {
+        return base;
+      }
+      const usdIsWhole = Math.abs(usd - Math.trunc(usd)) < 0.000001;
+      if (usdIsWhole && usd >= 1000 && originalCurrency && originalCurrency !== 'USD') {
+        return usd / 100;
+      }
+      return usd;
+    }
+
+    if (String(valueRecord?.currency || '').toUpperCase() === 'USD' && Number.isFinite(base)) {
+      const baseIsWhole = Math.abs(base - Math.trunc(base)) < 0.000001;
+      if (baseIsWhole && base >= 1000 && originalCurrency && originalCurrency !== 'USD') {
+        return base / 100;
+      }
+      return base;
+    }
+
+    return null;
+  };
 
   const waitForFinish = new Promise((resolve, reject) => {
     stream.on('finish', resolve);
@@ -69,55 +103,129 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
   });
 
   doc.pipe(stream);
-  doc.rect(0, 0, doc.page.width, 14).fill('#22c55e');
-  doc.moveDown(2);
-  doc.fillColor('#15803d').fontSize(12).text('Payment successful', { align: 'center' });
-  doc.moveDown(0.5);
-  doc.fillColor('#111827').fontSize(24).font('Helvetica-Bold').text('Booking Receipt', { align: 'center' });
-  doc.moveDown(0.5);
-  doc.font('Helvetica').fontSize(11).fillColor('#4b5563').text('Your payment has been received and the booking is confirmed.', { align: 'center' });
 
-  doc.moveDown(1.5);
-  doc.roundedRect(48, doc.y, 499, 72, 10).fillAndStroke('#dcfce7', '#86efac');
-  doc.fillColor('#14532d').fontSize(12).font('Helvetica-Bold').text('Booking summary', 64, doc.y + 14);
-  doc.font('Helvetica').fillColor('#14532d').fontSize(11);
-  doc.text(`Listing: ${record.listingTitle || listing?.title || 'Booked listing'}`, 64, doc.y + 8);
-  doc.text(`Location: ${record.listingLocation || listing?.location || ''}${record.listingCountry || listing?.country ? `, ${record.listingCountry || listing?.country}` : ''}`, 64, doc.y + 4);
+  const pageWidth = doc.page.width;
+  const left = 48;
+  const right = pageWidth - 48;
+  const contentWidth = right - left;
+  let y = 48;
 
-  const rowTop = doc.y + 18;
-  const rows = [
-    ['Booking ID', record.sessionId || record.paymentIntentId || ''],
-    ['Days', String(bookingDays)],
-    ['Reservation date', reservedAt],
-    ['Payment method', paymentMethod],
-  ];
+  const logoPath = path.join(__dirname, '..', 'public', 'images', 'snowflakes.png');
+  const signaturePath = path.join(__dirname, '..', 'public', 'images', 'signature.png');
+  let logoWidth = 0;
 
-  doc.moveTo(48, rowTop + 8).lineTo(547, rowTop + 8).stroke('#e5e7eb');
-  let rowY = rowTop + 18;
-  rows.forEach(([label, value], index) => {
-    doc.fillColor('#6b7280').font('Helvetica-Bold').fontSize(10).text(label, 64, rowY + index * 22);
-    doc.fillColor('#111827').font('Helvetica').fontSize(10).text(String(value || '-'), 300, rowY + index * 22, { width: 232, align: 'right' });
-  });
+  try {
+    if (fs.existsSync(logoPath)) {
+      doc.image(logoPath, left, y, { width: 28, height: 28 });
+      logoWidth = 36;
+    }
+  } catch (e) {
+    logoWidth = 0;
+  }
 
-  const amountTop = rowY + rows.length * 22 + 18;
-  doc.roundedRect(48, amountTop, 499, 102, 10).fillAndStroke('#f0fdf4', '#bbf7d0');
-  doc.fillColor('#14532d').font('Helvetica-Bold').fontSize(12).text('Receipt', 64, amountTop + 14);
-  doc.fillColor('#14532d').font('Helvetica').fontSize(11);
-  doc.text(`Subtotal`, 64, amountTop + 40);
-  doc.text(`${currency} ${subtotal.toFixed(2)}`, 440, amountTop + 40, { width: 92, align: 'right' });
-  doc.text(`Tax / GST`, 64, amountTop + 58);
-  doc.text(`${currency} ${tax.toFixed(2)}`, 440, amountTop + 58, { width: 92, align: 'right' });
-  doc.moveTo(64, amountTop + 76).lineTo(533, amountTop + 76).stroke('#bbf7d0');
-  doc.font('Helvetica-Bold').text('Total paid', 64, amountTop + 84);
-  doc.text(`${currency} ${subtotal.toFixed(2)}`, 440, amountTop + 84, { width: 92, align: 'right' });
+  doc.fillColor('#111827').font('Helvetica-Bold').fontSize(18).text('Invoice', left + logoWidth, y - 2);
+  doc.font('Helvetica-Bold').fontSize(10.5).text('Wanderlust Private Limited', left + logoWidth, y + 18);
+  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Thank you for your booking.', left + logoWidth, y + 34);
+  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text(`Website: ${siteLabel}`, left, y - 2, { width: contentWidth, align: 'right' });
 
-  doc.moveDown(9);
-  doc.fillColor('#6b7280').font('Helvetica').fontSize(10).text('You can view and manage your booking from your reservations page.', { align: 'left' });
-  doc.moveDown(0.5);
-  doc.fillColor('#111827').fontSize(10).text(`${process.env.APP_ORIGIN || ''}/listings/reservations`, { underline: true });
+  y += 72;
 
-  doc.moveDown(2);
-  doc.fillColor('#6b7280').fontSize(9).text('Wanderlust Private Limited', { align: 'center' });
+  doc.fillColor('#111827').font('Helvetica-Bold').fontSize(10).text('Invoice To', left, y);
+  doc.font('Helvetica-Bold').fontSize(10).text(displayName, left, y + 16);
+  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text(displayEmail, left, y + 32);
+  doc.text(displayLocation || ' ', left, y + 46);
+
+  doc.font('Helvetica-Bold').fontSize(10).fillColor('#111827').text(`Invoice # ${invoiceId}`, left, y, { width: contentWidth, align: 'right' });
+  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text(`Date: ${record.reservationDate ? new Date(record.reservationDate).toLocaleDateString() : new Date().toLocaleDateString()}`, left, y + 16, { width: contentWidth, align: 'right' });
+  doc.text(`Booked For: ${bookingDays} day(s)`, left, y + 32, { width: contentWidth, align: 'right' });
+
+  y += 76;
+
+  const tableTop = y;
+  const headerHeight = 26;
+  const rowHeight = 48;
+  const colSl = 40;
+  const colDesc = 260;
+  const colPrice = 110;
+  const colDays = 70;
+  const colTotal = contentWidth - (colSl + colDesc + colPrice + colDays);
+
+  const colX = {
+    sl: left,
+    desc: left + colSl,
+    price: left + colSl + colDesc,
+    days: left + colSl + colDesc + colPrice,
+    total: left + colSl + colDesc + colPrice + colDays,
+  };
+
+  doc.rect(left, tableTop, contentWidth, headerHeight).fill('#f3f4f6');
+  doc.rect(left, tableTop, contentWidth, headerHeight + rowHeight).stroke('#d1d5db');
+  doc.strokeColor('#d1d5db');
+  doc.moveTo(colX.desc, tableTop).lineTo(colX.desc, tableTop + headerHeight + rowHeight).stroke();
+  doc.moveTo(colX.price, tableTop).lineTo(colX.price, tableTop + headerHeight + rowHeight).stroke();
+  doc.moveTo(colX.days, tableTop).lineTo(colX.days, tableTop + headerHeight + rowHeight).stroke();
+  doc.moveTo(colX.total, tableTop).lineTo(colX.total, tableTop + headerHeight + rowHeight).stroke();
+
+  doc.fillColor('#111827').font('Helvetica-Bold').fontSize(9.5);
+  doc.text('SL', colX.sl + 8, tableTop + 7);
+  doc.text('Item Description', colX.desc + 8, tableTop + 7);
+  doc.text('Price', colX.price + 8, tableTop + 7);
+  doc.text('Days', colX.days + 8, tableTop + 7);
+  doc.text('Total', colX.total + 8, tableTop + 7);
+
+  const rowY = tableTop + headerHeight;
+  doc.fillColor('#111827').font('Helvetica').fontSize(9.5);
+  doc.text('1', colX.sl + 10, rowY + 10);
+  doc.font('Helvetica-Bold').text(displayTitle, colX.desc + 8, rowY + 8, { width: colDesc - 16 });
+  doc.font('Helvetica').fillColor('#6b7280').fontSize(9).text(`Reservation for ${bookingDays} day(s)`, colX.desc + 8, rowY + 24, { width: colDesc - 16 });
+  doc.fillColor('#111827').fontSize(9.5).text(`${subtotal.toFixed(2)} ${currency}`, colX.price + 8, rowY + 10, { width: colPrice - 16, align: 'right' });
+  doc.text(String(bookingDays), colX.days + 8, rowY + 10, { width: colDays - 16, align: 'center' });
+  doc.text(`${subtotal.toFixed(2)} ${currency}`, colX.total + 8, rowY + 10, { width: colTotal - 16, align: 'right' });
+
+  y = tableTop + headerHeight + rowHeight + 24;
+
+  doc.fillColor('#111827').font('Helvetica-Bold').fontSize(10).text('Payment Method', left, y);
+  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text(paymentMethod, left, y + 14);
+  doc.font('Helvetica-Bold').fontSize(10).fillColor('#111827').text('Customer Email', left, y + 38);
+  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text(displayEmail, left, y + 52);
+
+  const summaryWidth = 210;
+  const summaryX = right - summaryWidth;
+  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Subtotal', summaryX, y, { width: summaryWidth - 60 });
+  doc.fillColor('#111827').text(`${subtotal.toFixed(2)} ${currency}`, summaryX, y, { width: summaryWidth, align: 'right' });
+  doc.fillColor('#6b7280').text('Taxes', summaryX, y + 16, { width: summaryWidth - 60 });
+  doc.fillColor('#111827').text('0.00%', summaryX, y + 16, { width: summaryWidth, align: 'right' });
+  doc.fillColor('#6b7280').text('Discount', summaryX, y + 32, { width: summaryWidth - 60 });
+  doc.fillColor('#111827').text('0.00%', summaryX, y + 32, { width: summaryWidth, align: 'right' });
+
+  const totalRowY = y + 48;
+  doc.rect(summaryX, totalRowY - 2, summaryWidth, 18).fill('#f3f4f6');
+  doc.fillColor('#111827').font('Helvetica-Bold').text('Total', summaryX + 6, totalRowY, { width: summaryWidth - 12 });
+  doc.text(`${subtotal.toFixed(2)} ${currency}`, summaryX, totalRowY, { width: summaryWidth - 6, align: 'right' });
+
+  const usdAmount = getDisplayUsdAmount(record);
+  if (usdAmount !== null && usdAmount !== undefined) {
+    doc.font('Helvetica').fontSize(9).fillColor('#6b7280').text(`Equivalent USD: ${usdAmount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}`,
+      summaryX, totalRowY + 24, { width: summaryWidth, align: 'right' });
+  }
+
+  y += 90;
+  doc.fillColor('#111827').font('Helvetica-Bold').fontSize(10).text('Terms & Conditions / Notes', left, y);
+  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Thank you for your business.', left, y + 16);
+
+  try {
+    if (fs.existsSync(signaturePath)) {
+      doc.image(signaturePath, right - 140, y + 6, { width: 120, height: 36 });
+    }
+  } catch (e) {
+    /* ignore */
+  }
+  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Wanderlust', right - 140, y + 48, { width: 120, align: 'center' });
+  doc.text('Wanderlust Private Limited', right - 140, y + 62, { width: 120, align: 'center' });
+
+  const footerY = doc.page.height - 90;
+  doc.font('Helvetica').fontSize(9).fillColor('#6b7280').text('Contact: info@wanderlust.com • +1 (212) 555-0123', left, footerY, { width: contentWidth, align: 'center' });
+  doc.text('Address: 123 Wanderlust Ave, New York, NY 10001, USA', left, footerY + 14, { width: contentWidth, align: 'center' });
 
   doc.end();
   await waitForFinish;
@@ -319,81 +427,13 @@ module.exports.generateReceiptPdf = async (req, res) => {
     return res.redirect('/listings/reservations');
   }
 
-  const host = req.get('host');
-  res.render('listings/receipt.ejs', { record, listing, host }, async (err, html) => {
-    if (err) {
-      console.error('Render error for PDF:', err);
-      const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId });
-      const streamed = await streamPdfFile(res, fallbackPath, sessionId);
-      if (streamed) {
-        return;
-      }
+  const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId });
+  const streamed = await streamPdfFile(res, fallbackPath, sessionId);
+  if (streamed) {
+    return;
+  }
 
-      res.status(500).type('text/plain').send('Render error for PDF');
-      return;
-    }
-
-    const { puppeteer, usingCore } = await loadPuppeteer();
-    const useFallbackPdf = String(process.env.VERCEL || '') === '1';
-
-    if (!puppeteer) {
-      const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId });
-      const streamed = await streamPdfFile(res, fallbackPath, sessionId);
-      if (streamed) {
-        return;
-      }
-
-      res.status(500).type('text/plain').send('PDF generation failed');
-      return;
-    }
-
-    if (!useFallbackPdf) {
-      let browser;
-      try {
-        let execPath = process.env.PUPPETEER_EXECUTABLE_PATH || null;
-        if (!execPath && usingCore) {
-          const chromium = await import('@sparticuz/chromium');
-          execPath = await chromium.default.executablePath();
-        }
-
-        const launchOpts = { args: ['--no-sandbox', '--disable-setuid-sandbox'] };
-        if (usingCore && execPath) {
-          launchOpts.executablePath = execPath;
-        }
-
-        browser = await puppeteer.launch(launchOpts);
-        const page = await browser.newPage();
-        await page.setContent(html, { waitUntil: 'networkidle0', timeout: 0 });
-        await page.emulateMediaType('print');
-
-        const tmpPath = path.join(os.tmpdir(), `receipt-${sessionId}-${Date.now()}.pdf`);
-        await page.pdf({
-          path: tmpPath,
-          format: 'A4',
-          printBackground: true,
-          preferCSSPageSize: true,
-          margin: { top: '12mm', bottom: '12mm', left: '12mm', right: '12mm' },
-        });
-        await browser.close();
-
-        const streamed = await streamPdfFile(res, tmpPath, sessionId);
-        if (streamed) {
-          return;
-        }
-      } catch (browserErr) {
-        if (browser) await browser.close().catch(() => {});
-        console.error('Chromium PDF generation failed, using fallback:', browserErr);
-      }
-    }
-
-    const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId });
-    const streamed = await streamPdfFile(res, fallbackPath, sessionId);
-    if (streamed) {
-      return;
-    }
-
-    res.status(500).type('text/plain').send('PDF generation failed');
-  });
+  res.status(500).type('text/plain').send('PDF generation failed');
 };
 
 

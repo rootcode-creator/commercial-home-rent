@@ -41,38 +41,102 @@
   };
 %>
 
-<div class="container mt-5 mb-5 print-area">
+<div class="container mt-5 mb-5 print-area receipt-page">
   <style>
     /* Print stylesheet: hide everything except .print-area */
     @media print {
-      @page { size: A4; margin: 12mm; }
       body * { visibility: hidden; }
       .print-area, .print-area * { visibility: visible; }
-      .print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
+      .print-area { position: absolute; left: 0; top: 0; width: 100%; padding: 12mm; }
       .no-print { display: none !important; }
-      .table { page-break-inside: avoid; }
+    }
+
+    .receipt-page {
+      max-width: 980px;
+      color: #111827;
+    }
+
+    .receipt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .receipt-brand {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .receipt-logo {
+      width: 32px;
+      height: 32px;
+      object-fit: contain;
+    }
+
+    .receipt-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .receipt-company {
+      font-weight: 700;
+      font-size: 0.95rem;
+      margin-top: 0.1rem;
+    }
+
+    .receipt-thankyou {
+      color: #6b7280;
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    .receipt-meta {
+      text-align: right;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+
+    .receipt-table thead th {
+      background: #f3f4f6;
+      font-size: 0.85rem;
+      text-transform: none;
+    }
+
+    .receipt-table td,
+    .receipt-table th {
+      border-color: #d1d5db !important;
+    }
+
+    .receipt-summary {
+      min-width: 220px;
+    }
+
+    .receipt-total-row {
+      background: #f3f4f6;
+      font-weight: 700;
     }
   </style>
-  <div class="row mb-4">
-    <div class="col-8">
-      <div class="d-flex align-items-center gap-3 mb-2">
-        <img src="<%= 'http://' + host %>/images/snowflakes.png" alt="Wanderlust logo" style="height:48px; width:auto;" />
-        <div>
-          <h2 class="mb-1">Invoice</h2>
-          <div class="fw-bold">Wanderlust Private Limited</div>
-        </div>
+  <div class="receipt-header">
+    <div class="receipt-brand">
+      <img src="<%= 'http://' + host %>/images/snowflakes.png" alt="Wanderlust logo" class="receipt-logo" />
+      <div>
+        <p class="receipt-title">Invoice</p>
+        <div class="receipt-company">Wanderlust Private Limited</div>
+        <div class="receipt-thankyou">Thank you for your booking.</div>
       </div>
     </div>
-    <div class="col-4 text-end">
-      <a href="/listings/reservations" class="btn btn-outline-dark mb-2 no-print">Back to Reservations</a>
-      <a
-        href="/listings/reservations/<%= record.sessionId %>/pdf"
-        class="btn btn-outline-secondary mb-2 no-print ms-2"
-        download="receipt-<%= record.sessionId %>.pdf"
-      >
-        Download Receipt
-      </a>
-      <div class="small text-muted">Website: <%= host %></div>
+    <div class="receipt-meta">
+      <div class="d-flex flex-column align-items-end">
+        <div class="d-flex gap-2 mb-2 no-print">
+          <a href="/listings/reservations" class="btn btn-outline-dark">Back to Reservations</a>
+          <a href="/listings/reservations/<%= record.sessionId %>/pdf" class="btn btn-outline-secondary">Download PDF</a>
+        </div>
+        <div>Website: <%= host %></div>
+      </div>
     </div>
   </div>
 
@@ -91,8 +155,8 @@
   </div>
 
   <div class="table-responsive mb-3">
-    <table class="table table-striped table-bordered">
-      <thead class="table-light">
+    <table class="table table-bordered receipt-table">
+      <thead>
         <tr>
           <th style="width:60px;">SL</th>
           <th>Item Description</th>
@@ -109,6 +173,7 @@
           <td>1</td>
           <td>
             <div><strong><%= (listing && listing.title) || record.listingTitle || 'Booked listing' %></strong></div>
+            <div class="text-muted small">Reservation for <%= qty %> day(s)</div>
           </td>
           <td style="text-align:right;"><%= formatNumber(unitLocal) %> <%= (record.originalCurrency || record.localCurrency || record.currency || '') %></td>
           <td style="text-align:center;"><%= qty %></td>
@@ -130,7 +195,7 @@
       </div>
     </div>
     <div class="col-6">
-      <table class="table table-borderless">
+      <table class="table table-borderless receipt-summary">
         <tr>
           <td class="text-muted">Subtotal</td>
           <td class="text-end"><%= formatNumber(totalLocal) %> <%= (record.originalCurrency || record.localCurrency || record.currency || '') %></td>
@@ -143,7 +208,7 @@
           <td class="text-muted">Discount</td>
           <td class="text-end">0.00%</td>
         </tr>
-        <tr class="table-active">
+        <tr class="receipt-total-row">
           <td><strong>Total</strong></td>
           <td class="text-end"><strong><%= formatNumber(totalLocal) %> <%= (record.originalCurrency || record.localCurrency || record.currency || '') %></strong></td>
         </tr>
