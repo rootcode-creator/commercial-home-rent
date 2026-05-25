@@ -58,7 +58,7 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
   const subtotal = Number(totalValue || 0);
   const tax = 0;
   const paymentMethod = Array.isArray(record.paymentMethodTypes) && record.paymentMethodTypes.length > 0
-    ? record.paymentMethodTypes[0]
+    ? record.paymentMethodTypes.join(', ')
     : 'card';
   const bookingDays = record.bookingDays || 1;
   const reservedAt = record.reservationDate ? new Date(record.reservationDate).toLocaleString() : '';
@@ -126,7 +126,8 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
   doc.fillColor('#111827').font('Helvetica-Bold').fontSize(18).text('Invoice', left + logoWidth, y - 2);
   doc.font('Helvetica-Bold').fontSize(10.5).text('Wanderlust Private Limited', left + logoWidth, y + 18);
   doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Thank you for your booking.', left + logoWidth, y + 34);
-  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text(`Website: ${siteLabel}`, left, y - 2, { width: contentWidth, align: 'right' });
+  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Website:', left, y - 2, { width: contentWidth, align: 'right' });
+  doc.text(siteLabel, left, y + 12, { width: contentWidth, align: 'right' });
 
   y += 72;
 
@@ -142,10 +143,10 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
   y += 76;
 
   const tableTop = y;
-  const headerHeight = 26;
-  const rowHeight = 48;
+  const headerHeight = 32;
+  const rowHeight = 60;
   const colSl = 40;
-  const colDesc = 260;
+  const colDesc = 220;
   const colPrice = 110;
   const colDays = 70;
   const colTotal = contentWidth - (colSl + colDesc + colPrice + colDays);
@@ -168,7 +169,7 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
 
   doc.fillColor('#111827').font('Helvetica-Bold').fontSize(9.5);
   doc.text('SL', colX.sl + 8, tableTop + 7);
-  doc.text('Item Description', colX.desc + 8, tableTop + 7);
+  doc.text('Item\nDescription', colX.desc + 8, tableTop + 5);
   doc.text('Price', colX.price + 8, tableTop + 7);
   doc.text('Days', colX.days + 8, tableTop + 7);
   doc.text('Total', colX.total + 8, tableTop + 7);
@@ -176,11 +177,10 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
   const rowY = tableTop + headerHeight;
   doc.fillColor('#111827').font('Helvetica').fontSize(9.5);
   doc.text('1', colX.sl + 10, rowY + 10);
-  doc.font('Helvetica-Bold').text(displayTitle, colX.desc + 8, rowY + 8, { width: colDesc - 16 });
-  doc.font('Helvetica').fillColor('#6b7280').fontSize(9).text(`Reservation for ${bookingDays} day(s)`, colX.desc + 8, rowY + 24, { width: colDesc - 16 });
-  doc.fillColor('#111827').fontSize(9.5).text(`${subtotal.toFixed(2)} ${currency}`, colX.price + 8, rowY + 10, { width: colPrice - 16, align: 'right' });
-  doc.text(String(bookingDays), colX.days + 8, rowY + 10, { width: colDays - 16, align: 'center' });
-  doc.text(`${subtotal.toFixed(2)} ${currency}`, colX.total + 8, rowY + 10, { width: colTotal - 16, align: 'right' });
+  doc.font('Helvetica-Bold').text(displayTitle, colX.desc + 8, rowY + 10, { width: colDesc - 16 });
+  doc.fillColor('#111827').fontSize(9.5).text(`${subtotal.toFixed(2)} ${currency}`, colX.price + 8, rowY + 14, { width: colPrice - 16, align: 'right' });
+  doc.text(String(bookingDays), colX.days + 8, rowY + 14, { width: colDays - 16, align: 'center' });
+  doc.text(`${subtotal.toFixed(2)} ${currency}`, colX.total + 8, rowY + 14, { width: colTotal - 16, align: 'right' });
 
   y = tableTop + headerHeight + rowHeight + 24;
 
