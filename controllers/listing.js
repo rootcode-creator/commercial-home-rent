@@ -211,7 +211,7 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
 
   y += 90;
   doc.fillColor('#111827').font('Helvetica-Bold').fontSize(10).text('Terms & Conditions / Notes', left, y);
-  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Thank you for your business.', left, y + 16);
+  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Thank you for your booking.', left, y + 16);
 
   try {
     if (fs.existsSync(signaturePath)) {
@@ -220,8 +220,7 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId }) => {
   } catch (e) {
     /* ignore */
   }
-  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Wanderlust', right - 140, y + 48, { width: 120, align: 'center' });
-  doc.text('Wanderlust Private Limited', right - 140, y + 62, { width: 120, align: 'center' });
+  doc.font('Helvetica').fontSize(9.5).fillColor('#6b7280').text('Wanderlust Private Limited', right - 140, y + 52, { width: 120, align: 'center' });
 
   const footerY = doc.page.height - 90;
   doc.font('Helvetica').fontSize(9).fillColor('#6b7280').text('Contact: info@wanderlust.com • +1 (212) 555-0123', left, footerY, { width: contentWidth, align: 'center' });
