@@ -342,6 +342,15 @@ body {
   text-decoration: none;
 }
 
+.reservation-actions .btn {
+  white-space: nowrap;
+  min-width: 6.5rem;
+}
+
+.reservation-actions .btn.btn-outline-danger {
+  min-width: 5.25rem;
+}
+
 .cart-actions {
   display: flex;
   flex-wrap: wrap;
