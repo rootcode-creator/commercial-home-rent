@@ -23,13 +23,11 @@
 
     <div class="listing-gallery">
       <div class="gallery-main">
-        <img src="<%= listing.image.url %>" class="gallery-img" alt="listing image" />
+        <img src="<%= listing.image.url %>" class="gallery-img" alt="listing primary image" />
       </div>
       <div class="gallery-side">
-        <img src="<%= listing.image.url %>" class="gallery-img" alt="listing image" />
-        <img src="<%= listing.image.url %>" class="gallery-img" alt="listing image" />
-        <img src="<%= listing.image.url %>" class="gallery-img" alt="listing image" />
-        <img src="<%= listing.image.url %>" class="gallery-img" alt="listing image" />
+        <img src="<%= (listing.images && listing.images[0]) ? listing.images[0].url : listing.image.url %>" class="gallery-img" alt="listing image 1" />
+        <img src="<%= (listing.images && listing.images[1]) ? listing.images[1].url : listing.image.url %>" class="gallery-img" alt="listing image 2" />
       </div>
     </div>
 

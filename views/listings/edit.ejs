@@ -1,84 +1,239 @@
 <% layout("/layouts/boilerplate") -%>
 
     <body>
+        <div class="create-listing-container">
+            <h3 class="create-listing-title">Edit your listing</h3>
 
-        <div class="row mt-3">
-           
-            <div class="col-8  offset-2">
-                
-                <h3>Edit your listing</h3>
+            <div class="create-listing-wrapper">
+                <!-- Left Column: Form -->
+                <div class="listing-form-section">
+                    <form id="listingForm" action="/listings/<%= listing._id %>?_method=PUT" method="post" class="needs-validation mb-5" novalidate enctype="multipart/form-data">
 
-                <form action="/listings/<%= listing._id %>?_method=PUT" method="post" class="needs-validation mb-5" novalidate enctype="multipart/form-data">
+                        <!-- Title & Description -->
+                        <div class="form-group-compact">
+                            <div class="mb-2">
+                                <label for="title" class="form-label">Title</label>
+                                <input type="text" id="title" name="listing[title]" value="<%= listing.title %>" class="form-control" required>
+                                <div class="invalid-feedback">Title should be valid.</div>
+                            </div>
 
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Title</label>
-                        <input type="text" id="title" name="listing[title]" value="<%= listing.title %>" class="form-control" required>
-                        <div class="invalid-feedback">Title should be valid.</div>
-                    </div>
+                            <div class="mb-2">
+                                <label for="description" class="form-label">Description</label>
+                                <textarea id="description" name="listing[description]" rows="3" class="form-control" required><%= listing.description %></textarea>
+                                <div class="invalid-feedback">Enter a short description.</div>
+                            </div>
+                        </div>
 
-                    <div class="mb-3 mt-3">
-                        <label for="description" class="form-label">Description</label>
-                        <textarea id="description" name="listing[description]" class="form-control" required><%= listing.description %></textarea>
-                        <div class="invalid-feedback">Enter a short description.</div>
-                    </div>
+                        <!-- Image Upload Fields (single shared uploader like 'New') -->
+                        <div class="form-group-compact">
+                            <div class="mb-2">
+                                <label for="images" class="form-label">Images ( first becomes primary)</label>
+                                <div class="file-input-wrapper">
+                                    <input type="file" id="images" name="listing[images]" class="form-control" accept="image/*" multiple>
+                                </div>
+                                <small id="imagesHelp" class="form-text text-muted d-none">Leave empty to keep current images; first selected file replaces the primary image.</small>
+                                <div class="invalid-feedback">Please select valid image files only (max 3).</div>
+                            </div>
+                        </div>
 
-                    <div class="mb-3">
-                        Orginal Listing Image <br>
-                        <img src="<%= orginalImageUrl %>" width="300" height="200">
-                    </div>
+                        <!-- Price & Location (two-column) -->
+                        <div class="form-row-compact-2">
+                            <div class="form-col-compact-2">
+                                <label for="price" class="form-label">* Price</label>
+                                <input type="number" id="price" name="listing[price]" value="<%= listing.price %>" class="form-control" required>
+                                <div class="invalid-feedback">Price should be valid.</div>
+                            </div>
 
-                    <div class="mb-3">
-                        <label for="image" class="form-label">Upload New Image</label>
-                        <input type="file" id="image" name="listing[image]"  class="form-control" >
-                    </div>
+                            <div class="form-col-compact-2">
+                                <label for="location" class="form-label">* Location</label>
+                                <input type="text" id="location" name="listing[location]" value="<%= listing.location %>" class="form-control" required>
+                                <div class="invalid-feedback">Location should be valid.</div>
+                            </div>
+                        </div>
 
-                    <div class="row">
+                        <!-- Country & Category (two-column) -->
+                        <div class="form-row-compact-2">
+                            <div class="form-col-compact-2">
+                                <label for="country" class="form-label">* Country</label>
+                                <input type="text" id="country" name="listing[country]" value="<%= listing.country %>" class="form-control" required>
+                                <div class="invalid-feedback">Country should be valid.</div>
+                            </div>
 
-                    <div class="mb-3 col-md-4">
-                        <label for="price" class="form-label">Price</label>
-                        <input type="number" id="price" name="listing[price]" value="<%= listing.price %>" class="form-control" required>
-                        <div class="invalid-feedback">Price should be valid.</div>
+                            <div class="form-col-compact-2">
+                                <label for="category" class="form-label">* Category</label>
+                                <select id="category" name="listing[category]" class="form-select" required>
+                                    <option value="">Select a category</option>
+                                    <option value="rooms" <%= listing.category === 'rooms' ? 'selected' : '' %>>Rooms</option>
+                                    <option value="iconic-cities" <%= listing.category === 'iconic-cities' ? 'selected' : '' %>>Iconic Cities</option>
+                                    <option value="mountains" <%= listing.category === 'mountains' ? 'selected' : '' %>>Mountains</option>
+                                    <option value="castle" <%= listing.category === 'castle' ? 'selected' : '' %>>Castle</option>
+                                    <option value="amazing-pools" <%= listing.category === 'amazing-pools' ? 'selected' : '' %>>Amazing Pools</option>
+                                    <option value="camping" <%= listing.category === 'camping' ? 'selected' : '' %>>Camping</option>
+                                    <option value="dome" <%= listing.category === 'dome' ? 'selected' : '' %>>Dome</option>
+                                    <option value="boats" <%= listing.category === 'boats' ? 'selected' : '' %>>Boats</option>
+                                </select>
+                                <div class="invalid-feedback">Please choose a category.</div>
+                            </div>
+                        </div>
 
-                    </div>
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-dark add-btn mt-3 w-100">Update Listing</button>
 
-                    <div class="mb-3 col-md-4">
-                        <label for="country" class="form-label">Country</label>
-                        <input type="text" id="country" name="listing[country]" value="<%= listing.country %>" class="form-control" required>
-                        <div class="invalid-feedback">Country should be valid.</div>
-
-                    </div>
-
-                    <div class="mb-3 col-md-4">
-                        <label for="category" class="form-label">Category</label>
-                        <select id="category" name="listing[category]" class="form-select" required>
-                            <option value="rooms" <%= listing.category === 'rooms' ? 'selected' : '' %>>Rooms</option>
-                            <option value="iconic-cities" <%= listing.category === 'iconic-cities' ? 'selected' : '' %>>Iconic Cities</option>
-                            <option value="mountains" <%= listing.category === 'mountains' ? 'selected' : '' %>>Mountains</option>
-                            <option value="castle" <%= listing.category === 'castle' ? 'selected' : '' %>>Castle</option>
-                            <option value="amazing-pools" <%= listing.category === 'amazing-pools' ? 'selected' : '' %>>Amazing Pools</option>
-                            <option value="camping" <%= listing.category === 'camping' ? 'selected' : '' %>>Camping</option>
-                            <option value="dome" <%= listing.category === 'dome' ? 'selected' : '' %>>Dome</option>
-                            <option value="boats" <%= listing.category === 'boats' ? 'selected' : '' %>>Boats</option>
-                        </select>
-                        <div class="invalid-feedback">Please choose a category.</div>
-                    </div>
-
+                    </form>
                 </div>
 
-                    <div class="mb-3">
-                        <label for="location" class="form-label">Location</label>
-                        <input type="text" id="location" name="listing[location]" value="<%= listing.location %>"
-                            class="form-control" required>
-                            <div class="invalid-feedback">Location should be valid.</div>
+                <!-- Right Column: Image Preview Gallery -->
+                <div class="listing-preview-section">
+                    <div class="preview-gallery">
+                        <h5 class="preview-title">Current Images</h5>
+                        <div class="preview-grid">
+                            <!-- Main Preview Image -->
+                            <div class="preview-main">
+                                <% if (listing.image && listing.image.url) { %>
+                                    <img id="previewMain" src="<%= listing.image.url %>" alt="Primary image preview">
+                                <% } else { %>
+                                    <img id="previewMain" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23e9ecef' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%236c757d' text-anchor='middle' dy='.3em'%3ENo Primary Image%3C/text%3E%3C/svg%3E" alt="No primary image">
+                                <% } %>
+                            </div>
 
+                            <!-- Additional Images Preview -->
+                                <% 
+                                    let img1 = null;
+                                    let img2 = null;
+                                    if (listing.images && listing.images.length > 0) img1 = listing.images[0];
+                                    if (listing.images && listing.images.length > 1) img2 = listing.images[1];
+                                %>
+                            <div class="preview-side" <% if (!img1 && !img2) { %> style="display:none;" <% } %> >
+                                <img id="previewImg1" src="<%= img1 ? img1.url : (listing.image ? listing.image.url : '') %>" alt="Additional image 1 preview">
+                                <img id="previewImg2" src="<%= img2 ? img2.url : (listing.image ? listing.image.url : '') %>" alt="Additional image 2 preview">
+                            </div>
+                        </div>
+                        <div class="preview-status">
+                            <p id="imageStatus" class="text-muted small">
+                                <% 
+                                    let totalImages = (listing.images ? listing.images.length : 0) + 1;
+                                    let msg = totalImages + ' image(s) currently uploaded';
+                                %>
+                                <%= msg %>
+                            </p>
+                        </div>
                     </div>
-                
-
-                    <button class="btn btn-dark edit-btn mt-3">Edit</button>
-
-                </form>
-
+                </div>
             </div>
         </div>
 
+        <script>
+            // Image preview functionality for edit form — use single shared uploader `listing[images]`
+            const imageInput = document.getElementById('images');
+            const imagesHelp = document.getElementById('imagesHelp');
+            const previewMain = document.getElementById('previewMain');
+            const previewImg1 = document.getElementById('previewImg1');
+            const previewImg2 = document.getElementById('previewImg2');
+            const imageStatus = document.getElementById('imageStatus');
+            const listingForm = document.getElementById('listingForm');
+
+            // Store original images for reference
+            const originalPrimaryUrl = '<%= listing.image && listing.image.url ? listing.image.url : "null" %>';
+            const originalImg1Url = '<%= (listing.images && listing.images[0]) ? listing.images[0].url : "null" %>';
+            const originalImg2Url = '<%= (listing.images && listing.images[1]) ? listing.images[1].url : "null" %>';
+            let _objectUrls = [];
+
+            function isValidImageFile(file) {
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                return file && (validTypes.includes(file.type) || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name));
+            }
+
+            function updatePreview() {
+                const files = Array.from(imageInput.files || []).slice(0, 3);
+
+                // Revoke previous object URLs
+                _objectUrls.forEach(u => URL.revokeObjectURL(u));
+                _objectUrls = [];
+
+                if (files.length === 0) {
+                    imageStatus.textContent = 'No images selected';
+                    imageStatus.className = 'text-muted small';
+                    // reset previews to existing images
+                    previewMain.src = (originalPrimaryUrl !== 'null') ? originalPrimaryUrl : previewMain.src;
+                    previewImg1.src = (originalImg1Url !== 'null') ? originalImg1Url : previewImg1.src;
+                    previewImg2.src = (originalImg2Url !== 'null') ? originalImg2Url : previewImg2.src;
+                    return;
+                }
+
+                for (const file of files) {
+                    if (!isValidImageFile(file)) {
+                        if (imagesHelp) { imagesHelp.classList.remove('d-none'); imagesHelp.classList.add('text-danger'); }
+                        imageStatus.textContent = 'All image files must be valid image formats.';
+                        imageStatus.className = 'text-danger small';
+                        return;
+                    }
+                }
+
+                const urls = files.map(f => {
+                    try {
+                        const obj = URL.createObjectURL(f);
+                        _objectUrls.push(obj);
+                        return obj;
+                    } catch (e) {
+                        return '';
+                    }
+                });
+
+                previewMain.src = urls[0] || previewMain.src;
+                const previewSide = document.querySelector('.preview-side');
+                if (previewSide) previewSide.style.display = '';
+                previewImg1.src = urls[1] || urls[0] || previewImg1.src;
+                previewImg2.src = urls[2] || urls[1] || urls[0] || previewImg2.src;
+
+                imageStatus.innerHTML = '<strong>Selected:</strong> ' + files.map(f => f.name).join(', ');
+                if (imagesHelp) { imagesHelp.classList.add('d-none'); imagesHelp.classList.remove('text-danger'); }
+                if (files.length === 1) {
+                    imageStatus.textContent = '✓ 1 image selected - Primary image shown in all preview windows';
+                    imageStatus.className = 'text-success small';
+                } else if (files.length === 2) {
+                    imageStatus.textContent = `✓ ${files.length} images selected (1 primary + 1 additional)`;
+                    imageStatus.className = 'text-success small';
+                } else if (files.length === 3) {
+                    imageStatus.textContent = `✓ ${files.length} images selected - All preview windows filled`;
+                    imageStatus.className = 'text-success small';
+                }
+            }
+
+            // Accumulate picks across multiple selection events
+            const dtImages = new DataTransfer();
+            imageInput.addEventListener('change', function (e) {
+                const picked = Array.from(e.target.files || []);
+                for (const f of picked) {
+                    if (dtImages.items.length >= 3) break;
+                    dtImages.items.add(f);
+                }
+                imageInput.files = dtImages.files;
+                updatePreview();
+            });
+
+
+            // Form validation
+            listingForm.addEventListener('submit', function(event) {
+                // Validate images selection (max 3)
+                if (imageInput.files.length > 3) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    imageInput.classList.add('is-invalid');
+                    if (imagesHelp) { imagesHelp.classList.remove('d-none'); imagesHelp.classList.add('text-danger'); }
+                    return false;
+                } else {
+                    imageInput.classList.remove('is-invalid');
+                    if (imagesHelp) { imagesHelp.classList.add('d-none'); imagesHelp.classList.remove('text-danger'); }
+                }
+
+                if (!this.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                this.classList.add('was-validated');
+            }, false);
+
+            // Initialize preview on page load
+            window.addEventListener('load', updatePreview);
+        </script>
     </body>

@@ -1,73 +1,295 @@
 <% layout("/layouts/boilerplate") -%>
 
     <body>
-        <div class="row mt-3">
+        <div class="create-listing-container">
+            <h3 class="create-listing-title">Create a new listing</h3>
 
-            <div class="col-8  offset-2">
-                
-            <h3>Create a new list</h3>
+            <div class="create-listing-wrapper">
+                <!-- Left Column: Form -->
+                <div class="listing-form-section">
+                    <form id="listingForm" action="/listings" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
+                        
+                        <!-- Title -->
+                        <div class="form-group-compact">
+                            <label for="title" class="form-label">
+                                <span class="text-danger">*</span> Title
+                            </label>
+                            <input type="text" id="title" name="listing[title]" placeholder="Add a catchy title" class="form-control" required minlength="5" maxlength="100">
+                            <div class="invalid-feedback">Please provide a title (5-100 characters).</div>
+                        </div>
 
-            <form action="/listings" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
-                <div class="mb-3">
-                    <label for="title" class="form-label">Title</label>
-                    <input type="text" id="title" name="listing[title]" placeholder="Add a cachy title" class="form-control" required>
-                    <div class="invalid-feedback">Please provide a valid title. </div>
+                        <!-- Description -->
+                        <div class="form-group-compact">
+                            <label for="description" class="form-label">
+                                <span class="text-danger">*</span> Description
+                            </label>
+                            <textarea id="description" name="listing[description]" placeholder="Describe your listing" rows="3" class="form-control" required minlength="10" maxlength="500" style="resize: none; overflow: hidden;"></textarea>
+                            <small id="descCount" class="text-muted"></small>
+                            <div class="invalid-feedback">Please provide a description (10-500 characters).</div>
+                        </div>
+
+                        <!-- Image Upload -->
+                        <div class="form-group-compact">
+                            <label for="images" class="form-label">
+                                <span class="text-danger">*</span> Images
+                            </label>
+                            <div class="file-input-wrapper">
+                                <input type="file" id="images" name="listing[images]" class="form-control" accept="image/*" multiple required>
+                            </div>
+                            <small id="imagesHelp" class="form-text text-muted d-none">Upload up to 3 images. The first image becomes the main image.</small>
+                            <div class="invalid-feedback">Please select 1 to 3 valid image files.</div>
+                        </div>
+
+                        <!-- Price & Location Row -->
+                        <div class="form-row-compact-2">
+                            <div class="form-col-compact-2">
+                                <label for="price" class="form-label">
+                                    <span class="text-danger">*</span> Price
+                                </label>
+                                <input type="number" id="price" name="listing[price]" placeholder="1200" class="form-control" required min="1" max="9999999">
+                                <div class="invalid-feedback">Please provide a valid price.</div>
+                            </div>
+
+                            <div class="form-col-compact-2">
+                                <label for="location" class="form-label">
+                                    <span class="text-danger">*</span> Location
+                                </label>
+                                <input type="text" id="location" name="listing[location]" placeholder="e.g., Airport, Dhaka" class="form-control" required minlength="3" maxlength="100">
+                                <div class="invalid-feedback">Please provide a valid location.</div>
+                            </div>
+                        </div>
+
+                        <!-- Country & Category Row -->
+                        <div class="form-row-compact-2">
+                            <div class="form-col-compact-2">
+                                <label for="country" class="form-label">
+                                    <span class="text-danger">*</span> Country
+                                </label>
+                                <input type="text" id="country" name="listing[country]" placeholder="Bangladesh" class="form-control" required minlength="3" maxlength="50">
+                                <div class="invalid-feedback">Please provide a valid country.</div>
+                            </div>
+
+                            <div class="form-col-compact-2">
+                                <label for="category" class="form-label">
+                                    <span class="text-danger">*</span> Category
+                                </label>
+                                <select id="category" name="listing[category]" class="form-select" required>
+                                    <option value="">Select a category</option>
+                                    <option value="rooms">Rooms</option>
+                                    <option value="iconic-cities">Iconic Cities</option>
+                                    <option value="mountains">Mountains</option>
+                                    <option value="castle">Castle</option>
+                                    <option value="amazing-pools">Amazing Pools</option>
+                                    <option value="camping">Camping</option>
+                                    <option value="dome">Dome</option>
+                                    <option value="boats">Boats</option>
+                                </select>
+                                <div class="invalid-feedback">Please choose a category.</div>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" class="btn btn-dark add-btn w-100">Add Listing</button>
+
+                    </form>
                 </div>
 
-                <div class="mb-3">
-                    <label for="description" class="form-label">Description</label>
-                    <textarea id="description" name="listing[description]" placeholder="Enter Description"
-                        class="form-control" required></textarea>
-                        <div class="invalid-feedback">Please provide a short description. </div>
-                </div>
+                <!-- Right Column: Image Preview Gallery -->
+                <div class="listing-preview-section">
+                    <div class="preview-gallery">
+                        <h5 class="preview-title">Image Preview</h5>
+                        <div class="preview-grid">
+                            <!-- Main Preview Image -->
+                            <div class="preview-main">
+                                <img id="previewMain" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23e9ecef' width='400' height='300'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='16' fill='%236c757d' text-anchor='middle' dy='.3em'%3EPrimary%3C/text%3E%3C/svg%3E" alt="Primary image preview">
+                            </div>
 
-                <div class="mb-3">
-                    <label for="image" class="form-label">Upload Listing Image</label>
-                    <input type="file" id="image" name="listing[image]" class="form-control" required>
-                </div>
-
-                <div class="row">
-
-                <div class="mb-3 col-md-4">
-                    <label for="price" class="form-label">Price</label>
-                    <input type="number" id="price" name="listing[price]" placeholder="1200" class="form-control" required>
-                    <div class="invalid-feedback">Please provide a valid price. </div>
-                </div>
-
-                <div class="mb-3 col-md-4">
-                    <label for="country" class="form-label">Country</label>
-                    <input type="text" id="country" name="listing[country]" placeholder="Bangladesh" class="form-control" required>
-                    <div class="invalid-feedback">Please provide a valid country. </div>
-                </div>
-
-                <div class="mb-3 col-md-4">
-                    <label for="category" class="form-label">Category</label>
-                    <select id="category" name="listing[category]" class="form-select" required>
-                        <option value="rooms">Rooms</option>
-                        <option value="iconic-cities">Iconic Cities</option>
-                        <option value="mountains">Mountains</option>
-                        <option value="castle">Castle</option>
-                        <option value="amazing-pools">Amazing Pools</option>
-                        <option value="camping">Camping</option>
-                        <option value="dome">Dome</option>
-                        <option value="boats">Boats</option>
-                    </select>
-                    <div class="invalid-feedback">Please choose a category.</div>
+                            <!-- Additional Images Preview -->
+                            <div class="preview-side">
+                                <img id="previewImg1" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect fill='%23e9ecef' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='12' fill='%236c757d' text-anchor='middle' dy='.3em'%3E2%3C/text%3E%3C/svg%3E" alt="Image preview 2">
+                                <img id="previewImg2" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 150'%3E%3Crect fill='%23e9ecef' width='200' height='150'/%3E%3Ctext x='50%25' y='50%25' font-family='Arial' font-size='12' fill='%236c757d' text-anchor='middle' dy='.3em'%3E3%3C/text%3E%3C/svg%3E" alt="Image preview 3">
+                            </div>
+                        </div>
+                        <div class="preview-status">
+                            <p id="imageStatus" class="text-muted small">No images selected</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-
-                <div class="mb-3">
-                    <label for="location" class="form-label">Location</label>
-                    <input type="text" id="location" name="listing[location]" placeholder="Airport, Dhaka" class="form-control" required>
-                    <div class="invalid-feedback">Please provide a valid location. </div>
-                    <br>
-                </div>
-                <button class="btn btn-dark add-btn mt-3">Add</button>
-                <br><br>
-
-            </form>
-
-        </div>
         </div>
 
+        <script>
+            // Image preview functionality
+            const imageInput = document.getElementById('images');
+            const imagesHelp = document.getElementById('imagesHelp');
+            const previewMain = document.getElementById('previewMain');
+            const previewImg1 = document.getElementById('previewImg1');
+            const previewImg2 = document.getElementById('previewImg2');
+            const previewSide = document.querySelector('.preview-side');
+            const imageStatus = document.getElementById('imageStatus');
+            const listingForm = document.getElementById('listingForm');
+            let _objectUrls = [];
+            // DataTransfer to accumulate files across multiple picker uses
+            let dtImages = new DataTransfer();
+
+            // Validate file type
+            function isValidImageFile(file) {
+                const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+                return validTypes.includes(file.type) || /\.(jpg|jpeg|png|gif|webp)$/i.test(file.name);
+            }
+
+            function updatePreview() {
+                const files = Array.from(imageInput.files || []).slice(0, 3);
+
+                // Revoke any previous object URLs
+                _objectUrls.forEach(u => URL.revokeObjectURL(u));
+                _objectUrls = [];
+
+                if (files.length === 0) {
+                    imageInput.classList.add('is-invalid');
+                    if (imagesHelp) { imagesHelp.classList.remove('d-none'); imagesHelp.classList.add('text-danger'); }
+                    imageStatus.textContent = 'No images selected';
+                    imageStatus.className = 'text-muted small';
+                    // reset previews to defaults by leaving existing srcs
+                    return;
+                }
+
+                for (const file of files) {
+                    if (!isValidImageFile(file)) {
+                        imageInput.classList.add('is-invalid');
+                        if (imagesHelp) { imagesHelp.classList.remove('d-none'); imagesHelp.classList.add('text-danger'); }
+                        imageStatus.textContent = 'All image files must be valid image formats.';
+                        imageStatus.className = 'text-danger small';
+                        return;
+                    }
+                }
+
+                imageInput.classList.remove('is-invalid');
+                if (imagesHelp) { imagesHelp.classList.add('d-none'); imagesHelp.classList.remove('text-danger'); }
+
+                console.debug('new listing selected files:', files.map(f => f.name));
+
+                // Create object URLs for each file and map them to the three slots.
+                const urls = files.map(f => {
+                    try {
+                        const obj = URL.createObjectURL(f);
+                        _objectUrls.push(obj);
+                        return obj;
+                    } catch (e) {
+                        return '';
+                    }
+                });
+
+                // Assign previews. Always show side previews; when missing, fall back to the main image so single image fills all slots.
+                previewMain.src = urls[0] || previewMain.src;
+                if (previewSide) previewSide.style.display = '';
+                previewImg1.src = urls[1] || urls[0] || previewImg1.src;
+                previewImg2.src = urls[2] || urls[1] || urls[0] || previewImg2.src;
+
+                console.debug('preview urls set', urls);
+                // Show selected filenames for debugging
+                imageStatus.innerHTML = '<strong>Selected:</strong> ' + files.map(f => f.name).join(', ');
+                updateImageStatus(files.length);
+            }
+
+            function updateImageStatus(count) {
+                if (count === 0) {
+                    imageStatus.textContent = 'No images selected';
+                    imageStatus.className = 'text-muted small';
+                } else if (count === 1) {
+                    imageStatus.textContent = '✓ 1 image selected - Primary image shown in all preview windows';
+                    imageStatus.className = 'text-success small';
+                } else if (count === 2) {
+                    imageStatus.textContent = `✓ ${count} images selected (1 primary + 1 additional)`;
+                    imageStatus.className = 'text-success small';
+                } else if (count === 3) {
+                    imageStatus.textContent = `✓ ${count} images selected - All preview windows filled`;
+                    imageStatus.className = 'text-success small';
+                }
+            }
+
+            // Event listeners for image input — append files instead of replacing
+            imageInput.addEventListener('change', function (e) {
+                const picked = Array.from(e.target.files || []);
+                for (const f of picked) {
+                    if (dtImages.items.length >= 3) break;
+                    dtImages.items.add(f);
+                }
+                // write back to control so form submit includes accumulated files
+                imageInput.files = dtImages.files;
+                updatePreview();
+            });
+
+            // Form validation with enhanced checks
+            listingForm.addEventListener('submit', function(event) {
+                let isValid = true;
+
+                // Validate uploaded images
+                const files = Array.from(imageInput.files || []).slice(0, 3);
+                if (!files.length) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    imageInput.classList.add('is-invalid');
+                    if (imagesHelp) { imagesHelp.classList.remove('d-none'); imagesHelp.classList.add('text-danger'); }
+                    isValid = false;
+                } else if (files.some((file) => !isValidImageFile(file))) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    imageInput.classList.add('is-invalid');
+                    if (imagesHelp) { imagesHelp.classList.remove('d-none'); imagesHelp.classList.add('text-danger'); }
+                    imageStatus.textContent = 'Images must all be valid image formats.';
+                    imageStatus.className = 'text-danger small';
+                    isValid = false;
+                } else {
+                    imageInput.classList.remove('is-invalid');
+                    if (imagesHelp) { imagesHelp.classList.add('d-none'); imagesHelp.classList.remove('text-danger'); }
+                }
+
+                // HTML5 validation
+                if (!this.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    isValid = false;
+                }
+
+                this.classList.add('was-validated');
+                
+                if (!isValid) {
+                    return false;
+                }
+            }, false);
+
+            // Initialize preview on page load
+            window.addEventListener('load', function () {
+                updatePreview();
+                // Initialize description auto-resize and char count
+                const desc = document.getElementById('description');
+                const descCount = document.getElementById('descCount');
+                if (desc) {
+                    const max = parseInt(desc.getAttribute('maxlength') || '500', 10);
+                    function autoResizeTextarea(el) {
+                        el.style.height = 'auto';
+                        el.style.height = (el.scrollHeight) + 'px';
+                    }
+                    function updateCharCount() {
+                        if (!descCount) return;
+                        const len = desc.value.length;
+                        if (len === 0) {
+                            descCount.textContent = '';
+                        } else {
+                            descCount.textContent = `${len}/${max}`;
+                        }
+                        if (len > max) descCount.className = 'text-danger'; else descCount.className = 'text-muted';
+                    }
+                    // bind
+                    desc.addEventListener('input', function () {
+                        autoResizeTextarea(desc);
+                        updateCharCount();
+                    });
+                    // run once to size to initial content
+                    autoResizeTextarea(desc);
+                    updateCharCount();
+                }
+            });
+        </script>
     </body>

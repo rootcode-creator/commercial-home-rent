@@ -8,13 +8,14 @@ const multer  = require('multer');
 const {storage} = require("../cloudConfig.js");
 const upload = multer({storage});
 
-
-
-
 router.route("/")
   .get(wrapAsync(listingController.index))
   .post(isLoggedIn,  
-    upload.single("listing[image]"),
+    // accept either the shared `listing[images]` uploader or the older `listing[image]` field
+    upload.fields([
+      { name: "listing[images]", maxCount: 3 },
+      { name: "listing[image]", maxCount: 1 }
+    ]),
     validateListing,
     wrapAsync(listingController.createListing));
   
@@ -42,7 +43,11 @@ router.post("/reservations/:sessionId/cancel", isLoggedIn, wrapAsync(listingCont
 router.route("/:id")
   .get(wrapAsync(listingController.showListing))
   .put(isLoggedIn, isOwner, 
-    upload.single("listing[image]"),
+    // accept both field names to be backwards-compatible with existing clients
+    upload.fields([
+      { name: "listing[images]", maxCount: 3 },
+      { name: "listing[image]", maxCount: 1 }
+    ]),
     validateListing, wrapAsync(listingController.updateListing))
   .delete(isLoggedIn, isOwner, wrapAsync(listingController.destroyListing));
 
