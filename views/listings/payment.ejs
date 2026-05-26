@@ -5,7 +5,7 @@
     <div class="card shadow-sm payment-card">
       <div class="card-body p-4">
         <h3 class="card-title mb-3">Payment for <%= listing.title %></h3>
-        <p class="text-muted mb-2">Owned by <b><%= listing.owner.username %></b></p>
+        <p class="text-muted mb-2">Owned by <b><%= (listing.owner && listing.owner.username) || 'Unknown' %></b></p>
 
         <div class="p-3 bg-light rounded mb-3">
           <p class="mb-1"><strong>Stay price:</strong> ৳<%= listing.price.toLocaleString("en-BN") %> / night</p>

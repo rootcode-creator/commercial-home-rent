@@ -13,6 +13,22 @@ module.exports.renderSignUpForm = (req, res) => {
 module.exports.signup = async (req, res, next) => {
     try {
         let { username, email, password, city } = req.body;
+        email = typeof email === 'string' ? email.trim().toLowerCase() : '';
+
+        // basic email format validation
+        const emailRegex = /^\S+@\S+\.\S+$/;
+        if (!email || !emailRegex.test(email)) {
+            req.flash('error', 'Please provide a valid email address.');
+            return res.redirect('/signup');
+        }
+
+        // ensure email is not already registered
+        const existing = await User.findOne({ email });
+        if (existing) {
+            req.flash('error', 'Email is already registered. Please login or use another email.');
+            return res.redirect('/signup');
+        }
+
         const newUser = new User({ email, username, city });
         const registeredUser = await User.register(newUser, password);
         req.login(registeredUser, (err) => {
@@ -23,7 +39,12 @@ module.exports.signup = async (req, res, next) => {
             return res.redirect("/listings");
         });
     } catch (e) {
-        req.flash("error", e.message);
+        // Handle duplicate key (race condition) with friendlier message
+        if (e && e.code === 11000 && e.keyValue && e.keyValue.email) {
+            req.flash('error', 'Email is already registered. Please login or use another email.');
+            return res.redirect('/signup');
+        }
+        req.flash("error", e.message || 'An error occurred while signing up');
         return res.redirect("/signup");
     }
 };

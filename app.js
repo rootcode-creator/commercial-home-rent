@@ -42,11 +42,11 @@ const useMongoSessionStore =
 
 main()
   .then(() => {
-    console.log("Connected to database");
+    // Connected to database (log removed for production)
     startDailyExchangeRateRefresh();
   })
   .catch((err) => {
-    console.log(err);
+    // Database connection error (logging removed)
   });
 async function main() {
   await mongoose.connect(dbUrl);
@@ -107,10 +107,10 @@ if (useMongoSessionStore) {
     store = MongoStore.create(storeOptions);
 
     store.on("error", (err) => {
-      console.log("Error in MONGO SESSION STORE", err);
+      // Error in Mongo session store (logging removed)
     });
   } catch (err) {
-    console.log("Falling back to MemoryStore", err);
+    // Falling back to MemoryStore (logging removed)
   }
 }
 
@@ -178,7 +178,7 @@ app.use( (err, req, res, next) => {
 
 if (process.env.VERCEL !== "1") {
   app.listen(port, () => {
-    console.log(`Server started on port ${port}`);
+    // Server started (log removed)
   });
 }
 

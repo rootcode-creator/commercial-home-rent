@@ -41,6 +41,24 @@
 
     return null;
   };
+
+  const getBookingDays = (record) => {
+    const startRaw = record?.bookingStartDate || record?.reservationDate;
+    const endRaw = record?.bookingEndDate;
+    if (!startRaw || !endRaw) {
+      return record?.bookingDays || 1;
+    }
+
+    const start = new Date(startRaw);
+    const end = new Date(endRaw);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return record?.bookingDays || 1;
+    }
+
+    const toUtcDay = (date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+    const diff = Math.round((toUtcDay(end) - toUtcDay(start)) / (24 * 60 * 60 * 1000));
+    return Math.max(1, diff + 1);
+  };
 %>
 
 <div class="container mt-5 mb-5">
@@ -70,13 +88,13 @@
         <tbody>
           <% reservations.forEach(function(record) { %>
             <tr>
-              <td><%= record.listing?.title || record.listingTitle || "Booked listing" %></td>
+              <td><span class="nowrap"><%= record.listing?.title || record.listingTitle || "Booked listing" %></span></td>
               <td>
-                <%= record.listing?.location || record.listingLocation || "Location unavailable" %>
-                <% if (record.listing?.country || record.listingCountry) { %>, <%= record.listing?.country || record.listingCountry %><% } %>
+                <span class="nowrap"><%= record.listing?.location || record.listingLocation || "Location unavailable" %>
+                <% if (record.listing?.country || record.listingCountry) { %>, <%= record.listing?.country || record.listingCountry %><% } %></span>
               </td>
-              <td><span class="badge text-bg-success">Completed</span></td>
-              <td><%= record.bookingDays || 1 %> day(s)</td>
+              <td><span class="badge text-bg-primary">Completed</span></td>
+              <td><%= getBookingDays(record) %> day(s)</td>
               <td>
                 <% const usdAmount = getDisplayUsdAmount(record); %>
                 <% if (usdAmount !== null && usdAmount !== undefined) { %>

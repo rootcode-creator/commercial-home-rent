@@ -6,13 +6,19 @@ import { loadStripe } from "https://cdn.jsdelivr.net/npm/@stripe/stripe-js/+esm"
 
   const cartListingData = document.getElementById("cart-listing-data");
   const cartListing = cartListingData ? JSON.parse(cartListingData.textContent || "{}") : {};
+  const bookingRangesData = document.getElementById("cart-booking-ranges");
+  const bookingRanges = bookingRangesData
+    ? JSON.parse(bookingRangesData.textContent || "[]")
+    : [];
   const cartConfigData = document.getElementById("cart-config-data");
   const cartConfig = cartConfigData ? JSON.parse(cartConfigData.textContent || "{}") : {};
-  console.log("[cart] item information", cartListing);
+  // console.log("[cart] item information", cartListing);
 
   const row = cartPage.querySelector(".cart-item-row");
   const dayPrice = Number(row?.dataset.dayPrice || 0);
   const dayValue = cartPage.querySelector("[data-days-value]");
+  const dateInput = cartPage.querySelector("#booking-range");
+  const dateError = cartPage.querySelector("[data-date-error]");
   const subtotalCell = cartPage.querySelector(".cart-subtotal-cell");
   const subtotalSummary = cartPage.querySelector("[data-summary-subtotal]");
   const gstSummary = cartPage.querySelector("[data-summary-gst]");
@@ -25,8 +31,6 @@ import { loadStripe } from "https://cdn.jsdelivr.net/npm/@stripe/stripe-js/+esm"
   const rateRow = cartPage.querySelector("[data-summary-rate]");
   const rateValue = cartPage.querySelector("[data-summary-rate-value]");
   const payButton = cartPage.querySelector("[data-pay-button]");
-  const decrementButton = cartPage.querySelector('[data-action="decrement"]');
-  const incrementButton = cartPage.querySelector('[data-action="increment"]');
   const gstRate = 0.18;
   const isGstEnabled = () => localStorage.getItem("gstEnabled") === "true";
   let currentTotal = dayPrice;
@@ -35,6 +39,8 @@ import { loadStripe } from "https://cdn.jsdelivr.net/npm/@stripe/stripe-js/+esm"
   let usdRateForLocal = null;
   let localCurrency = null;
   let localCurrencyLabel = null;
+  let bookingStart = null;
+  let bookingEnd = null;
 
   const currency = (value) => `৳${Number(value).toLocaleString("en-BN")}`;
   const formatCurrency = (value, code) =>
@@ -89,6 +95,21 @@ import { loadStripe } from "https://cdn.jsdelivr.net/npm/@stripe/stripe-js/+esm"
     }
   };
 
+  const toUtcDay = (date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const getDaysBetween = (start, end) => {
+    if (!start || !end) return 1;
+    const diff = Math.round((toUtcDay(end) - toUtcDay(start)) / (24 * 60 * 60 * 1000));
+    return diff + 1;
+  };
+
+  const toLocalDateString = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
+
   const fetchRates = async () => {
     localCurrency = getUserCurrency() || "USD";
     localCurrencyLabel = getRegionName(new Intl.NumberFormat().resolvedOptions().locale);
@@ -109,11 +130,11 @@ import { loadStripe } from "https://cdn.jsdelivr.net/npm/@stripe/stripe-js/+esm"
         usdRateForBdt = null;
       }
     } catch (error) {
-      console.log("Exchange rate error", error);
+      // Exchange rate fetch failed during cart render; silently ignore in production
     }
   };
 
-  const render = (days) => {
+  const render = (days, hasRange) => {
     const safeDays = Math.max(1, days);
     const subtotal = dayPrice * safeDays;
     const gstAmount = isGstEnabled() ? subtotal * gstRate : 0;
@@ -126,6 +147,8 @@ import { loadStripe } from "https://cdn.jsdelivr.net/npm/@stripe/stripe-js/+esm"
     gstSummary.textContent = currency(gstAmount);
     totalSummary.textContent = currency(total);
     payButton.textContent = `Pay ${currency(total)}`;
+    payButton.disabled = !hasRange;
+    payButton.setAttribute("aria-disabled", String(!hasRange));
 
     if (usdRateForBdt) {
       const usdTotal = total / usdRateForBdt;
@@ -133,39 +156,167 @@ import { loadStripe } from "https://cdn.jsdelivr.net/npm/@stripe/stripe-js/+esm"
       updateRateDisplay(usdTotal, localTotal);
     }
 
-    decrementButton.disabled = safeDays === 1;
   };
 
   let days = 1;
-  fetchRates().finally(() => render(days));
+  fetchRates().finally(() => render(days, false));
 
-  incrementButton.addEventListener("click", () => {
-    days += 1;
-    render(days);
-  });
+  if (window.flatpickr && dateInput) {
+    dateInput.setAttribute("autocomplete", "off");
+    dateInput.value = "";
+    const toDayKey = (date) =>
+      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
 
-  decrementButton.addEventListener("click", () => {
-    days = Math.max(1, days - 1);
-    render(days);
-  });
+    const disabledRanges = bookingRanges
+      .map((range) => ({ from: range.start, to: range.end }))
+      .filter((range) => range.from && range.to);
 
-  window.addEventListener("gst-change", () => render(days));
+    const parseDateOnly = (value) => {
+      const parts = String(value || "").split("-").map((part) => Number(part));
+      if (parts.length !== 3) return null;
+      const [year, month, day] = parts;
+      if (!year || !month || !day) return null;
+      return new Date(year, month - 1, day);
+    };
+
+    const disabledRangeKeys = disabledRanges
+      .map((range) => {
+        const from = parseDateOnly(range.from);
+        const to = parseDateOnly(range.to);
+        if (!from || !to) return null;
+        return { from: toDayKey(from), to: toDayKey(to) };
+      })
+      .filter(Boolean);
+
+    const isBookedDate = (date) => {
+      const key = toDayKey(date);
+      return disabledRangeKeys.some((range) => key >= range.from && key <= range.to);
+    };
+
+    const rangeOverlapsDisabled = (start, end) => {
+      const startKey = toDayKey(start);
+      const endKey = toDayKey(end);
+      return disabledRangeKeys.some((range) => startKey <= range.to && endKey >= range.from);
+    };
+
+    const setFilledState = (instance, isFilled) => {
+      const targets = [instance?.input, instance?.altInput].filter(Boolean);
+      targets.forEach((el) => el.classList.toggle("is-filled", isFilled));
+    };
+
+    window.flatpickr(dateInput, {
+      mode: "range",
+      dateFormat: "Y-m-d",
+      altInput: true,
+      altFormat: "M j",
+      rangeSeparator: " - ",
+      altInputClass: "form-control cart-date-input cart-date-input--alt",
+      showMonths: 2,
+      minDate: "today",
+      disable: [isBookedDate],
+      defaultDate: null,
+      onDayCreate: (dObj, dStr, fp, dayElem) => {
+        const date = dayElem.dateObj;
+        if (!date) return;
+        const isBooked = isBookedDate(date);
+        if (isBooked) {
+          dayElem.classList.add("booked-day");
+          dayElem.classList.add("flatpickr-disabled", "notAllowed");
+          dayElem.setAttribute("aria-disabled", "true");
+        }
+      },
+      onReady: (selectedDates, dateStr, instance) => {
+        instance.clear();
+        if (instance.altInput) {
+          instance.altInput.value = "";
+        }
+        setFilledState(instance, false);
+      },
+      onChange: (selectedDates, dateStr, instance) => {
+        if (selectedDates.length === 2) {
+          const nextStart = selectedDates[0];
+          const nextEnd = selectedDates[1];
+          const diffDays = getDaysBetween(nextStart, nextEnd);
+
+          if (diffDays < 1) {
+            bookingStart = null;
+            bookingEnd = null;
+            days = 1;
+            if (dateError) {
+              dateError.hidden = false;
+            }
+            render(days, false);
+            return;
+          }
+
+          if (rangeOverlapsDisabled(nextStart, nextEnd)) {
+            bookingStart = null;
+            bookingEnd = null;
+            days = 1;
+            if (dateError) {
+              dateError.textContent = "Selected dates are not available.";
+              dateError.hidden = false;
+            }
+            instance.clear();
+            setFilledState(instance, false);
+            render(days, false);
+            return;
+          }
+
+          bookingStart = nextStart;
+          bookingEnd = nextEnd;
+          days = diffDays;
+          setFilledState(instance, true);
+          if (dateError) {
+            dateError.textContent = "Please select available dates.";
+            dateError.hidden = true;
+          }
+          render(days, true);
+          return;
+        }
+
+        bookingStart = null;
+        bookingEnd = null;
+        days = 1;
+        setFilledState(instance, false);
+        if (dateError) {
+          dateError.textContent = "Please select available dates.";
+          dateError.hidden = true;
+        }
+        render(days, false);
+      },
+      onValueUpdate: (selectedDates, dateStr, instance) => {
+        if (instance.altInput && instance.altInput.value) {
+          instance.altInput.value = instance.altInput.value.replace(" to ", " - ");
+        }
+      },
+    });
+  }
+
+  window.addEventListener("gst-change", () => render(days, !!bookingStart && !!bookingEnd));
   window.addEventListener("storage", (event) => {
     if (event.key === "gstEnabled") {
-      render(days);
+      render(days, !!bookingStart && !!bookingEnd);
     }
   });
 
   window.makePayment = () => {
     (async () => {
       try {
+        if (!bookingStart || !bookingEnd) {
+          if (dateError) {
+            dateError.hidden = false;
+          }
+          return;
+        }
+
         if (!cartConfig.stripePublicKey) {
-          console.log("Stripe public key is missing");
+          // Stripe public key missing; abort payment initiation
           return;
         }
 
         if (!cartConfig.stripePublicKey.startsWith("pk_")) {
-          console.log("Stripe public key must start with pk_");
+          // Invalid Stripe public key format; abort
           return;
         }
 
@@ -177,6 +328,8 @@ import { loadStripe } from "https://cdn.jsdelivr.net/npm/@stripe/stripe-js/+esm"
 
         const subtotal = dayPrice * days;
         const gstAmount = isGstEnabled() ? subtotal * gstRate : 0;
+        const bookingStartDate = toLocalDateString(bookingStart);
+        const bookingEndDate = toLocalDateString(bookingEnd);
         const products = [
           {
             listingId: cartListing._id,
@@ -200,7 +353,11 @@ import { loadStripe } from "https://cdn.jsdelivr.net/npm/@stripe/stripe-js/+esm"
           });
         }
 
-        const body = { products };
+        const body = {
+          products,
+          bookingStartDate,
+          bookingEndDate,
+        };
 
         const headers = {
           "Content-Type": "application/json",
@@ -217,13 +374,26 @@ import { loadStripe } from "https://cdn.jsdelivr.net/npm/@stripe/stripe-js/+esm"
           ? await response.json()
           : await response.text();
         if (!response.ok || !payload || typeof payload === "string" || !payload.url) {
-          console.log("Checkout session error", payload);
+          // Checkout session creation failed; show user-friendly error
+          if (dateError) {
+            const message = payload && payload.error
+              ? String(payload.error)
+              : "Selected dates are not available.";
+            dateError.textContent = message;
+            dateError.hidden = false;
+          }
+          if (bookingStart && bookingEnd) {
+            bookingStart = null;
+            bookingEnd = null;
+            days = 1;
+            render(days, false);
+          }
           return;
         }
 
         window.location.href = payload.url;
       } catch (error) {
-        console.log("Payment error", error);
+        // Payment flow error; handled silently for now
       }
     })();
   };

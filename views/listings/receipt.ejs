@@ -39,6 +39,33 @@
 
     return null;
   };
+
+  const formatShortDate = (value) => {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return date
+      .toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })
+      .replace(/([A-Za-z]+)/, (match) => match.toUpperCase());
+  };
+
+  const getInclusiveBookingDays = (record) => {
+    const startRaw = record && (record.bookingStartDate || record.reservationDate);
+    const endRaw = record && record.bookingEndDate;
+    if (!startRaw || !endRaw) {
+      return Math.max(1, Number(record && record.bookingDays) || 1);
+    }
+
+    const start = new Date(startRaw);
+    const end = new Date(endRaw);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      return Math.max(1, Number(record && record.bookingDays) || 1);
+    }
+
+    const toUtcDay = (date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+    const diff = Math.round((toUtcDay(end) - toUtcDay(start)) / (24 * 60 * 60 * 1000));
+    return Math.max(1, diff + 1);
+  };
 %>
 
 <div class="container mt-5 mb-5 print-area receipt-page">
@@ -148,8 +175,8 @@
     </div>
     <div class="col-6 text-end">
       <div><strong>Invoice #</strong> <%= String((record && record.sessionId) || (record && record.paymentIntentId) || '').slice(0, 12) %></div>
-      <div class="text-muted"><strong>Date:</strong> <%= (record && record.reservationDate) ? new Date(record.reservationDate).toLocaleDateString() : ((record && record.sessionCreatedAt) ? new Date(record.sessionCreatedAt).toLocaleDateString() : new Date().toLocaleDateString()) %></div>
-      <div class="text-muted"><strong>Booked For:</strong> <%= record.bookingDays || 1 %> day(s)</div>
+      <div class="text-muted"><strong>Date:</strong> <%= formatShortDate((record && record.reservationDate) ? record.reservationDate : ((record && record.sessionCreatedAt) ? record.sessionCreatedAt : new Date())) %></div>
+      <div class="text-muted"><strong>Booked For:</strong> <%= getInclusiveBookingDays(record) %> day(s)</div>
     </div>
   </div>
 
@@ -165,13 +192,13 @@
         </tr>
       </thead>
       <tbody>
-        <% const qty = Number((record && record.bookingDays) || 1); %>
+        <% const qty = Number(getInclusiveBookingDays(record)); %>
         <% const totalLocal = Number((record && (record.originalAmountTotal !== undefined && record.originalAmountTotal !== null ? record.originalAmountTotal : (record.localAmountTotal !== undefined && record.localAmountTotal !== null ? record.localAmountTotal : record.amountTotal))) || 0); %>
         <% const unitLocal = qty > 0 ? (totalLocal / qty) : totalLocal; %>
         <tr>
           <td>1</td>
           <td>
-            <div><strong><%= (listing && listing.title) || record.listingTitle || 'Booked listing' %></strong></div>
+            <div><strong><span class="nowrap"><%= (listing && listing.title) || record.listingTitle || 'Booked listing' %></span></strong></div>
           </td>
           <td style="text-align:right;"><%= formatNumber(unitLocal) %> <%= (record.originalCurrency || record.localCurrency || record.currency || '') %></td>
           <td style="text-align:center;"><%= qty %></td>

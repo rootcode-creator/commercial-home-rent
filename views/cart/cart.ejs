@@ -1,5 +1,7 @@
 <% layout("/layouts/boilerplate") -%>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
 <div class="cart-page mt-4 mb-5">
   <div class="cart-breadcrumb mb-4">
     <a href="/listings">Home</a>
@@ -9,7 +11,7 @@
 
   <% const price = listing.price; %>
 
-  <div class="row g-4 align-items-start">
+  <div class="row g-4 align-items-stretch">
     <div class="col-12 col-lg-8">
       <div class="cart-panel">
         <div class="table-responsive">
@@ -18,7 +20,7 @@
               <tr>
                 <th scope="col">Product</th>
                 <th scope="col">Price</th>
-                <th scope="col">Days</th>
+                <th scope="col">Dates</th>
                 <th scope="col">Subtotal</th>
                 <th scope="col"></th>
               </tr>
@@ -36,10 +38,20 @@
                 </td>
                 <td class="cart-price-cell">৳<%= price.toLocaleString("en-BN") %></td>
                 <td>
-                  <div class="cart-qty-group" aria-label="Day controls">
-                    <button class="cart-qty-btn" type="button" data-action="decrement" aria-label="Decrease days">-</button>
-                    <span class="cart-qty-value" data-days-value>1</span>
-                    <button class="cart-qty-btn" type="button" data-action="increment" aria-label="Increase days">+</button>
+                  <div class="cart-date-group">
+                    <input
+                      type="text"
+                      class="form-control cart-date-input"
+                      id="booking-range"
+                      placeholder="Select check-in and check-out"
+                      aria-label="Booking date range"
+                    />
+                    <div class="cart-date-meta text-muted small">
+                      <span data-days-value>1</span> night(s)
+                    </div>
+                    <div class="text-danger small" data-date-error hidden>
+                      Please select available dates.
+                    </div>
                   </div>
                 </td>
                 <td class="cart-subtotal-cell">৳<%= price.toLocaleString("en-BN") %></td>
@@ -99,8 +111,10 @@
 </div>
 
 <script id="cart-listing-data" type="application/json"><%- JSON.stringify(listing) %></script>
+<script id="cart-booking-ranges" type="application/json"><%- JSON.stringify(bookingRanges || []) %></script>
 <script id="cart-config-data" type="application/json"><%- JSON.stringify({
   apiURL: "/cart",
   stripePublicKey: process.env.WANDERLUST_STRIPE_PUBLIC_KEY || ""
 }) %></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script type="module" src="/js/cart.js"></script>

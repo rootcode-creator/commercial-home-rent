@@ -120,12 +120,12 @@ const getUsdRatesFor = async (currencies) => {
 
 const startDailyExchangeRateRefresh = () => {
   refreshDailyRates().catch((error) => {
-    console.log("Exchange rate refresh failed", error.message || error);
+    // Exchange rate refresh failed (log removed)
   });
 
   setInterval(() => {
     refreshDailyRates().catch((error) => {
-      console.log("Exchange rate refresh failed", error.message || error);
+      // Exchange rate refresh failed (log removed)
     });
   }, ONE_DAY_MS);
 };

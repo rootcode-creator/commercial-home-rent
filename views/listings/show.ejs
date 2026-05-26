@@ -6,12 +6,20 @@
 
 </script>
 
+<% const owner = listing.owner || {}; const ownerName = owner.username || 'Unknown'; const ownerInitial = (ownerName && ownerName.charAt ? ownerName.charAt(0).toUpperCase() : 'U'); const ownerIsCurrentUser = (currUser && owner._id && owner._id.equals) ? owner._id.equals(currUser._id) : false; %>
+
   <div class="listing-show">
     <div class="listing-header">
       <h3>
         <%= listing.title %>
       </h3>
     </div>
+
+    <% if (listing.status === "maintenance") { %>
+      <div class="alert alert-warning mb-0">
+        This listing is under maintenance. New reservations are temporarily unavailable.
+      </div>
+    <% } %>
 
     <div class="listing-gallery">
       <div class="gallery-main">
@@ -31,14 +39,14 @@
           <div class="card-body">
             <div class="listing-host">
               <div class="listing-host-avatar">
-                <% if (listing.owner && listing.owner.avatar && listing.owner.avatar.url) { %>
-                  <img src="<%= listing.owner.avatar.url %>" alt="Profile" class="listing-host-avatar-image" />
+                <% if (owner.avatar && owner.avatar.url) { %>
+                  <img src="<%= owner.avatar.url %>" alt="Profile" class="listing-host-avatar-image" />
                 <% } else { %>
-                  <%= (listing.owner.username || "U").charAt(0).toUpperCase() %>
+                  <%= ownerInitial %>
                 <% } %>
               </div>
               <p class="card-text mb-0">
-                Owned by <b><i><%= listing.owner.username %></i></b>
+                Owned by <b><i><%= ownerName %></i></b>
               </p>
             </div>
 
@@ -57,7 +65,7 @@
           </div>
         </div>
 
-        <% if (currUser && listing.owner._id.equals(currUser._id) ){ %>
+        <% if (ownerIsCurrentUser) { %>
 
         <div class="btns mb-5">
           <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark col-1 offset-3 small-screen">Edit</a>
@@ -78,17 +86,24 @@
             <p class="card-text listing-price">
               &#2547; &nbsp; <%= listing.price.toLocaleString("en-BN") %> /night
             </p>
-            <% if (currUser && !listing.owner._id.equals(currUser._id)) { %>
-              <a href="/cart/<%= listing._id %>" class="btn payment-btn w-100 mt-2">
-                Reserve
-              </a>
+            <% if (currUser && !ownerIsCurrentUser) { %>
+              <% if (listing.status === "maintenance") { %>
+                <button class="btn btn-outline-warning w-100 mt-2" type="button" disabled>
+                  Under Maintenance
+                </button>
+                <p class="text-muted small mt-2 mb-0">This listing is temporarily unavailable for new reservations.</p>
+              <% } else { %>
+                <a href="/cart/<%= listing._id %>" class="btn payment-btn w-100 mt-2">
+                  Reserve
+                </a>
+              <% } %>
             <% } %>
           </div>
         </div>
       </aside>
     </div>
 
-    <% const canReview = currUser && !listing.owner._id.equals(currUser._id); %>
+    <% const canReview = currUser && !ownerIsCurrentUser; %>
     <div class="listing-reviews-section <%= canReview ? "" : "no-form" %>">
       <div class="reviews-layout <%= canReview ? "" : "no-form" %>">
         <% if (canReview){ %>
@@ -153,8 +168,7 @@
             <div class="reviews-grid">
               <% for(review of reviews){ %>
                 <% const reviewDate = review.createdAt ? new Date(review.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : ""; %>
-                <% const joinedAt = review.author && review.author.joinedAt ? new Date(review.author.joinedAt) : null; %>
-                <% const yearsOn = joinedAt ? Math.max(1, Math.floor((Date.now() - joinedAt.getTime()) / 31557600000)) : null; %>
+                
                 <div class="review-item">
                   <div class="review-head">
                     <div class="review-avatar">
@@ -165,24 +179,35 @@
                       <% } %>
                     </div>
                     <div>
-                      <h5 class="card-title review-name">@<%= review.author.username %></h5>
-                      <% if (review.author && review.author.city) { %>
-                        <p class="review-subtitle mb-0"><%= review.author.city %></p>
-                      <% } %>
-                      <% if (yearsOn) { %>
-                        <p class="review-subtitle mb-0"><%= yearsOn %> years on Home Rent</p>
+                      <h5 class="card-title review-name">@<%= (review.author && review.author.username) || 'Unknown' %></h5>
+                      <% const reviewCity = review.author && review.author.city ? review.author.city : null; %>
+                      <% if (reviewCity && reviewDate) { %>
+                        <p class="text-muted small mb-0"><%= reviewCity %> , <%= reviewDate %></p>
+                      <% } else if (reviewCity) { %>
+                        <p class="text-muted small mb-0"><%= reviewCity %></p>
+                      <% } else if (reviewDate) { %>
+                        <p class="text-muted small mb-0"><%= reviewDate %></p>
                       <% } %>
                       <p class="starability-result card-text" data-rating="<%= review.rating %>"></p>
-                      <% if (reviewDate) { %>
-                        <p class="review-date mb-0"><%= reviewDate %></p>
-                      <% } %>
                     </div>
                   </div>
 
-                  <p class="card-text mb-3"><%= review.comment %></p>
+                  <% const fullComment = review.comment || ""; const isLongComment = fullComment.length > 200; %>
+                  <div class="card-text mb-3 review-comment">
+                    <div class="review-preview"><%= fullComment %></div>
+                    <% if (isLongComment) { %>
+                      <a href="#" class="show-more-link small">Show more</a>
+                      <div class="review-overlay" aria-hidden="true" style="display:none;">
+                        <div class="review-overlay-inner">
+                          <button class="overlay-close btn btn-sm btn-outline-dark">Close</button>
+                          <div class="review-full"><%= fullComment %></div>
+                        </div>
+                      </div>
+                    <% } %>
+                  </div>
 
-                  <% if (currUser && review.author && review.author._id && review.author._id.equals(currUser._id)) { %>
-                  <form class="mb-3" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE"
+                      <% if (currUser && review.author && review.author._id && review.author._id.equals(currUser._id)) { %>
+                  <form class="mb-3 review-delete" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE"
                     method="post">
                     <button class="btn btn-sm btn-dark">Delete</button>
                   </form>
@@ -197,7 +222,7 @@
               <h4 class="reviews-summary-title">All Reviews</h4>
             </div>
             <div class="listing-empty-section mb-3">
-              <% if (currUser && listing.owner._id.equals(currUser._id)) { %>
+              <% if (ownerIsCurrentUser) { %>
                 <p class="text-muted mb-0">No reviews yet.</p>
               <% } else { %>
                 <p class="text-muted mb-0">No reviews yet. Be the first to share your experience by log in.</p>
@@ -216,3 +241,28 @@
   </div>
 
  <script src="/js/map.js"></script>
+<script>
+  // Open overlay for full comment without changing card height
+  (function(){
+    document.addEventListener('click', function(e){
+      const t = e.target;
+      if (!t) return;
+      if (t.classList.contains('show-more-link')){
+        e.preventDefault();
+        const parent = t.closest('.review-item');
+        if (!parent) return;
+        const overlay = parent.querySelector('.review-overlay');
+        if (!overlay) return;
+        overlay.style.display = 'flex';
+        overlay.setAttribute('aria-hidden','false');
+      }
+      if (t.classList.contains('overlay-close')){
+        e.preventDefault();
+        const overlay = t.closest('.review-overlay');
+        if (!overlay) return;
+        overlay.style.display = 'none';
+        overlay.setAttribute('aria-hidden','true');
+      }
+    });
+  })();
+</script>

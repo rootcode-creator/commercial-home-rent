@@ -34,9 +34,44 @@ const formatMoney = (amount, currency) => {
 const ejs = require("ejs");
 const path = require("path");
 
+const toDisplayDate = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date
+    .toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "2-digit" })
+    .replace(/([A-Za-z]+)/, (match) => match.toUpperCase());
+};
+
+const getBookingRange = (record) => {
+  const startRaw = record.bookingStartDate || record.reservationDate || null;
+  const start = startRaw ? new Date(startRaw) : null;
+  if (!start || Number.isNaN(start.getTime())) {
+    return { bookingDays: record.bookingDays || 1, bookingStartText: "", bookingEndText: "" };
+  }
+
+  let end = record.bookingEndDate ? new Date(record.bookingEndDate) : null;
+  if (!end || Number.isNaN(end.getTime())) {
+    const daysFallback = Math.max(1, Number(record.bookingDays) || 1);
+    // bookingDays is inclusive; reconstruct end as start + (days - 1)
+    const offset = Math.max(0, daysFallback - 1);
+    end = new Date(start.getTime() + offset * 24 * 60 * 60 * 1000);
+  }
+
+  const toUtcDay = (date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const diff = Math.round((toUtcDay(end) - toUtcDay(start)) / (24 * 60 * 60 * 1000));
+  const bookingDays = Math.max(1, diff + 1);
+
+  return {
+    bookingDays,
+    bookingStartText: toDisplayDate(start),
+    bookingEndText: toDisplayDate(end),
+  };
+};
+
 const buildBookingEmail = async (record) => {
   const listingTitle = record.listingTitle || "Booked listing";
-  const bookingDays = record.bookingDays || 1;
+  const { bookingDays, bookingStartText, bookingEndText } = getBookingRange(record);
   const currency = record.originalCurrency || record.localCurrency || record.currency || "USD";
   const totalValue = record.originalAmountTotal ?? record.localAmountTotal ?? record.amountTotal ?? 0;
   const total = (Number(totalValue) || 0).toFixed(2);
@@ -61,6 +96,8 @@ const buildBookingEmail = async (record) => {
     currency,
     total,
     reservationDate: reservedAt,
+    bookingStartDate: bookingStartText,
+    bookingEndDate: bookingEndText,
     bookingId,
     subtotal,
     tax,
@@ -73,14 +110,14 @@ const buildBookingEmail = async (record) => {
     customerName: record.customerName || "",
   });
 
-  const text = `Booking confirmed: ${listingTitle} - Booking #${bookingId}\n\nHello ${record.customerName || 'Guest'},\n\nThank you — your booking is confirmed.\n\nListing: ${listingTitle}\nLocation: ${record.listingLocation || ''}${record.listingCountry ? ', ' + record.listingCountry : ''}\nDays: ${bookingDays}\nReservation date: ${reservedAt}\nPayment method: ${paymentMethod}\n\nReceipt:\n  Subtotal: ${currency} ${subtotal}\n  Tax / GST: ${currency} ${tax}\n  Total paid: ${currency} ${total}\n\nView your booking: ${bookingUrl}\n\nIf you have questions, contact ${supportEmail}.\n\nThanks,\nWanderlust Private Limited`;
+  const text = `Booking confirmed: ${listingTitle} - Booking #${bookingId}\n\nHello ${record.customerName || 'Guest'},\n\nThank you — your booking is confirmed.\n\nListing: ${listingTitle}\nLocation: ${record.listingLocation || ''}${record.listingCountry ? ', ' + record.listingCountry : ''}\nBooking dates: ${bookingStartText}${bookingEndText ? ' to ' + bookingEndText : ''}\nNights: ${bookingDays}\nReservation date: ${reservedAt}\nPayment method: ${paymentMethod}\n\nReceipt:\n  Subtotal: ${currency} ${subtotal}\n  Tax / GST: ${currency} ${tax}\n  Total paid: ${currency} ${total}\n\nView your booking: ${bookingUrl}\n\nIf you have questions, contact ${supportEmail}.\n\nThanks,\nWanderlust Private Limited`;
 
   return { subject, html, text };
 };
 
 const buildCancellationEmail = async (record) => {
   const listingTitle = record.listingTitle || "Booked listing";
-  const bookingDays = record.bookingDays || 1;
+  const { bookingDays, bookingStartText, bookingEndText } = getBookingRange(record);
   const currency = record.originalCurrency || record.localCurrency || record.currency || "USD";
   const totalValue = record.originalAmountTotal ?? record.localAmountTotal ?? record.amountTotal ?? 0;
   const total = (Number(totalValue) || 0).toFixed(2);
@@ -99,6 +136,8 @@ const buildCancellationEmail = async (record) => {
     bookingDays,
     currency,
     total,
+    bookingStartDate: bookingStartText,
+    bookingEndDate: bookingEndText,
     bookingId,
     canceledAt,
     supportEmail,
@@ -108,7 +147,7 @@ const buildCancellationEmail = async (record) => {
     customerName: record.customerName || "",
   });
 
-  const text = `Booking canceled: ${listingTitle} - Booking #${bookingId}\n\nHello ${record.customerName || 'Guest'},\n\nYour reservation has been canceled successfully.\n\nListing: ${listingTitle}\nLocation: ${record.listingLocation || ''}${record.listingCountry ? ', ' + record.listingCountry : ''}\nDays: ${bookingDays}\nCanceled at: ${canceledAt}\nTotal paid: ${currency} ${total}\n\nIf you have questions, contact ${supportEmail}.\n\nThanks,\nWanderlust Private Limited`;
+  const text = `Booking canceled: ${listingTitle} - Booking #${bookingId}\n\nHello ${record.customerName || 'Guest'},\n\nYour reservation has been canceled successfully.\n\nListing: ${listingTitle}\nLocation: ${record.listingLocation || ''}${record.listingCountry ? ', ' + record.listingCountry : ''}\nBooking dates: ${bookingStartText}${bookingEndText ? ' to ' + bookingEndText : ''}\nNights: ${bookingDays}\nCanceled at: ${canceledAt}\nTotal paid: ${currency} ${total}\n\nIf you have questions, contact ${supportEmail}.\n\nThanks,\nWanderlust Private Limited`;
 
   return { subject, html, text };
 };
@@ -306,6 +345,12 @@ const upsertPaymentRecord = async ({ session, status, eventType }) => {
     listingLocation: session.metadata?.listingLocation || null,
     listingCountry: session.metadata?.listingCountry || null,
     bookingDays: session.metadata?.days ? Number(session.metadata.days) : null,
+    bookingStartDate: session.metadata?.bookingStartDate
+      ? new Date(session.metadata.bookingStartDate)
+      : null,
+    bookingEndDate: session.metadata?.bookingEndDate
+      ? new Date(session.metadata.bookingEndDate)
+      : null,
     reservationDate: session.created ? new Date(session.created * 1000) : null,
     paymentMethodTypes: Array.isArray(session.payment_method_types)
       ? session.payment_method_types

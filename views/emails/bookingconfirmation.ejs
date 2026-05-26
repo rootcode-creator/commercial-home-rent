@@ -23,7 +23,13 @@
       <td style="padding:6px 0; text-align:right; color:#333;"><%= bookingId %></td>
     </tr>
     <tr>
-      <td style="padding:6px 0; color:#333;"><strong>Days</strong></td>
+      <td style="padding:6px 0; color:#333;"><strong>Booking dates</strong></td>
+      <td style="padding:6px 0; text-align:right; color:#333;">
+        <%= bookingStartDate %><% if (bookingEndDate) { %> - <%= bookingEndDate %><% } %>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:6px 0; color:#333;"><strong>Nights</strong></td>
       <td style="padding:6px 0; text-align:right; color:#333;"><%= bookingDays %></td>
     </tr>
     <tr>

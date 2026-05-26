@@ -5,8 +5,8 @@
 
     <% const querySuffix = searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ""; %>
 
-    <a href="/listings<%= searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : "" %>" class="filter-link">
-      <div class="filter <%= !selectedCategory ? 'active-filter' : '' %>">
+    <a href="/listings?trending=true" class="filter-link">
+      <div class="filter <%= isTrending ? 'active-filter' : '' %>">
         <div>
           <i class="fa-solid fa-fire"></i>
         </div>
@@ -141,6 +141,12 @@
       <a href="/listings/<%= listing._id %>/" class="listing-link">
         <div class="card col listing-card">
           <img src="<%= listing.image.url %>" class="card-img-top" alt="listed image" style="height: 14rem;">
+
+          <% if (listing.status === "maintenance") { %>
+            <div class="card-badge-overlay">
+              <span class="badge text-bg-warning">Maintenance</span>
+            </div>
+          <% } %>
 
           <div class="card-img-overlay"></div>
           <div class="card-body">

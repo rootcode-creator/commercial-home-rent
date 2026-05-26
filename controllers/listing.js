@@ -34,6 +34,37 @@ const categoryLabels = {
   boats: "Boats",
 };
 
+const getListingStatusMessage = (status) => {
+  if (status === "maintenance") {
+    return "This listing is under maintenance. New reservations are temporarily unavailable.";
+  }
+
+  if (status === "inactive") {
+    return "Listing is inactive.";
+  }
+
+  return "Listing is unavailable.";
+};
+
+const getInclusiveBookingDays = (record) => {
+  const startRaw = record?.bookingStartDate || record?.reservationDate || null;
+  const endRaw = record?.bookingEndDate || null;
+
+  if (!startRaw || !endRaw) {
+    return Math.max(1, Number(record?.bookingDays) || 1);
+  }
+
+  const start = new Date(startRaw);
+  const end = new Date(endRaw);
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return Math.max(1, Number(record?.bookingDays) || 1);
+  }
+
+  const toUtcDay = (date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const diff = Math.round((toUtcDay(end) - toUtcDay(start)) / (24 * 60 * 60 * 1000));
+  return Math.max(1, diff + 1);
+};
+
 const loadPuppeteer = async () => {
   try {
     const coreModule = await import("puppeteer-core");
@@ -61,7 +92,7 @@ const buildReceiptPdfFallback = async ({ record, listing, sessionId, host }) => 
   const paymentMethod = Array.isArray(record.paymentMethodTypes) && record.paymentMethodTypes.length > 0
     ? record.paymentMethodTypes.join(', ')
     : 'card';
-  const bookingDays = record.bookingDays || 1;
+  const bookingDays = getInclusiveBookingDays(record);
   const reservedAt = record.reservationDate ? new Date(record.reservationDate).toLocaleString() : '';
   const invoiceId = String(record.sessionId || record.paymentIntentId || '').slice(0, 12);
   const displayName = record.customerName || 'Guest';
@@ -271,6 +302,7 @@ const streamPdfFile = async (res, tmpPath, sessionId) => {
 module.exports.index = async (req, res) => {
   const searchQuery = req.query.q?.trim() || "";
   const selectedCategory = req.query.category?.trim().toLowerCase() || "";
+  const isTrending = String(req.query.trending || "").toLowerCase() === "true";
   const conditions = [];
 
   if (searchQuery) {
@@ -313,11 +345,73 @@ module.exports.index = async (req, res) => {
   const filter = conditions.length > 0 ? { $and: conditions } : {};
   const combinedFilter = {
     $and: [
-      { $or: [{ status: "active" }, { status: { $exists: false } }] },
+      { status: { $ne: "inactive" } },
       filter,
     ],
   };
   let allListings = await Listing.find(combinedFilter);
+
+  if (isTrending) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const msPerDay = 24 * 60 * 60 * 1000;
+    const startDate = new Date(today.getTime() - 3 * msPerDay);
+    const endDate = new Date(today.getTime() + 3 * msPerDay);
+
+    const trendingRecords = await PaymentRecord.aggregate([
+      {
+        $match: {
+          status: "paid",
+          paymentStatus: "paid",
+          lastEventType: { $in: ["checkout.session.completed", "checkout.session.async_payment_succeeded"] },
+          reservationDate: { $gte: startDate, $lte: endDate },
+        },
+      },
+      {
+        $group: {
+          _id: "$listingId",
+          totalOrders: { $sum: 1 },
+        },
+      },
+      {
+        $match: {
+          totalOrders: { $gt: 3 },
+        },
+      },
+    ]);
+
+    const trendingIds = trendingRecords.map((record) => record._id).filter(Boolean);
+    if (trendingIds.length > 0) {
+      allListings = await Listing.find({ _id: { $in: trendingIds }, status: { $ne: "inactive" } });
+    } else {
+      const popularRecords = await PaymentRecord.aggregate([
+        {
+          $match: {
+            status: "paid",
+            paymentStatus: "paid",
+            lastEventType: { $in: ["checkout.session.completed", "checkout.session.async_payment_succeeded"] },
+          },
+        },
+        {
+          $group: {
+            _id: "$listingId",
+            totalOrders: { $sum: 1 },
+          },
+        },
+        {
+          $sort: { totalOrders: -1 },
+        },
+        {
+          $limit: 12,
+        },
+      ]);
+
+      const popularIds = popularRecords.map((record) => record._id).filter(Boolean);
+      allListings = popularIds.length > 0
+        ? await Listing.find({ _id: { $in: popularIds }, status: { $ne: "inactive" } })
+        : [];
+    }
+  }
 
   return res.render("listings/index.ejs", {
     allListings,
@@ -325,6 +419,7 @@ module.exports.index = async (req, res) => {
     selectedCategory,
     selectedCategoryLabel: categoryLabels[selectedCategory] || "",
     selectedCategoryCount: selectedCategory ? allListings.length : null,
+    isTrending,
   });
 };
 
@@ -422,23 +517,28 @@ module.exports.myListings = async (req, res) => {
     };
 
     const bookingRecords = await PaymentRecord.find(bookingFilters)
-      .select("listingId reservationDate bookingDays")
+      .select("listingId reservationDate bookingDays bookingStartDate bookingEndDate")
       .lean();
 
     const now = Date.now();
     bookingRecords.forEach((record) => {
-      if (!record.reservationDate) return;
       const listingId = String(record.listingId || "");
       if (!listingId) return;
 
-      const start = new Date(record.reservationDate).getTime();
-      const days = Math.max(1, Number(record.bookingDays) || 1);
-      const end = start + days * 24 * 60 * 60 * 1000;
+      const startRaw = record.bookingStartDate || record.reservationDate;
+      if (!startRaw) return;
 
-      if (now >= start && now < end) {
+      const start = new Date(startRaw).getTime();
+      if (Number.isNaN(start)) return;
+
+      const bookingDays = getInclusiveBookingDays(record);
+      const endExclusive = start + bookingDays * 24 * 60 * 60 * 1000;
+      const endDisplay = start + Math.max(0, bookingDays - 1) * 24 * 60 * 60 * 1000;
+
+      if (now >= start && now < endExclusive) {
         bookingRanges.set(listingId, {
           start,
-          end: end - 1,
+          end: endDisplay,
         });
       }
     });
@@ -490,7 +590,7 @@ module.exports.showListing = async (req, res) => {
     return res.redirect("/listings");
   }
   if (listing.status === "inactive") {
-    req.flash("error", "Listing is inactive.");
+    req.flash("error", getListingStatusMessage(listing.status));
     return res.redirect("/listings");
   }
   return res.render("listings/show.ejs", { listing });
@@ -643,7 +743,7 @@ module.exports.createListing = async (req, res, next) => {
     },
     { upsert: true, new: true }
   );
-  console.log(savedListing);
+  // savedListing logged during development; removed console output
 
   req.flash("success", "New Listing Created!");
   return res.redirect("/listings");
@@ -704,6 +804,42 @@ module.exports.destroyListing = async (req, res) => {
   );
 
   req.flash("success", "Listing marked as inactive.");
+  return res.redirect("/listings/mylistings");
+};
+
+
+module.exports.markMaintenance = async (req, res) => {
+  let { id } = req.params;
+  const listing = await Listing.findByIdAndUpdate(id, { status: "maintenance" }, { new: true });
+  if (!listing) {
+    req.flash("error", "Listing you requested does not exist!");
+    return res.redirect("/listings/mylistings");
+  }
+
+  await MyListing.findOneAndUpdate(
+    { listingId: listing._id },
+    { $set: { status: "maintenance" } }
+  );
+
+  req.flash("success", "Listing marked as maintenance.");
+  return res.redirect("/listings/mylistings");
+};
+
+
+module.exports.setListingActive = async (req, res) => {
+  let { id } = req.params;
+  const listing = await Listing.findByIdAndUpdate(id, { status: "active" }, { new: true });
+  if (!listing) {
+    req.flash("error", "Listing you requested does not exist!");
+    return res.redirect("/listings/mylistings");
+  }
+
+  await MyListing.findOneAndUpdate(
+    { listingId: listing._id },
+    { $set: { status: "active" } }
+  );
+
+  req.flash("success", "Listing marked as active.");
   return res.redirect("/listings/mylistings");
 };
 

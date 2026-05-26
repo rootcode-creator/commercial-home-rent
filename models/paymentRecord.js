@@ -83,6 +83,12 @@ const paymentRecordSchema = new mongoose.Schema(
     bookingDays: {
       type: Number,
     },
+    bookingStartDate: {
+      type: Date,
+    },
+    bookingEndDate: {
+      type: Date,
+    },
     reservationDate: {
       type: Date,
     },

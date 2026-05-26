@@ -41,7 +41,7 @@ const listingSchema = new Schema({
     },
     status: {
         type: String,
-        enum: ["active", "inactive"],
+            enum: ["active", "maintenance", "inactive"],
         default: "active",
         index: true,
     },

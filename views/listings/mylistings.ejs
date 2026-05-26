@@ -26,7 +26,7 @@
             <th>Location</th>
             <th>Price</th>
             <th>Orders</th>
-            <th>Total Paid</th>
+            <th>Total Revenue</th>
             <th>Booking Status</th>
             <th>Listing Status</th>
             <th>Action</th>
@@ -35,41 +35,51 @@
         <tbody>
           <% allListings.forEach(function(listing) { %>
             <tr>
-                        <td><%= listing.listingName %></td>
+                        <td><span class="nowrap"><%= listing.listingName %></span></td>
               <td>
-                <%= listing.location || "Location unavailable" %>
+                <span class="nowrap"><%= listing.location || "Location unavailable" %></span>
               </td>
-                        <td>&#2547; <%= listing.price.toLocaleString("en-BN") %> /night</td>
+                        <td><span class="nowrap">&#2547; <%= listing.price.toLocaleString("en-BN") %> /night</span></td>
                         <td><%= listing.totalOrders || 0 %></td>
               <td>
                           <% if (listing.totalOrders > 0 && listing.totalPaid > 0) { %>
                   <% const currencyLabel = listing.totalPaidCurrency === "MULTI" ? "Multiple" : (listing.totalPaidCurrency || ""); %>
-                  <%= currencyLabel ? `${currencyLabel} ${formatNumber(listing.totalPaid)}` : formatNumber(listing.totalPaid) %>
+                  <span class="total-revenue"><%= currencyLabel ? `${currencyLabel} ${formatNumber(listing.totalPaid)}` : formatNumber(listing.totalPaid) %></span>
                 <% } else { %>
                   <span class="text-muted">N/A</span>
                 <% } %>
               </td>
               <td>
-                <% if (listing.bookingRange) { %>
-                  <% const startDate = new Date(listing.bookingRange.start).toLocaleDateString(); %>
-                  <% const endDate = new Date(listing.bookingRange.end).toLocaleDateString(); %>
-                  <span class="badge text-bg-success">Booked</span>
-                  <div class="text-muted small">(<%= startDate %> - <%= endDate %>)</div>
+                <% if (listing.status === "inactive") { %>
+                  <span class="badge badge-unknown">Unknown</span>
+                <% } else if (listing.bookingRange) { %>
+                  <span class="badge booked-badge">Booked</span>
                 <% } else { %>
                   <span class="badge text-bg-secondary">Not booked</span>
                 <% } %>
               </td>
                         <td>
-                          <% if (listing.status === "inactive") { %>
-                            <span class="badge text-bg-secondary">Inactive</span>
+                                    <% if (listing.status === "maintenance") { %>
+                                      <span class="badge text-bg-warning">Maintenance</span>
+                                    <% } else if (listing.status === "inactive") { %>
+                            <span class="badge deleted-status-badge">Deleted</span>
                           <% } else { %>
-                            <span class="badge text-bg-success">Active</span>
+                            <span class="badge status-active-badge">Active</span>
                           <% } %>
                         </td>
               <td>
                 <div class="d-flex align-items-center gap-1 flex-nowrap reservation-actions">
                             <a href="/listings/<%= listing.listingId %>" class="btn btn-sm btn-outline-dark">View</a>
                   <a href="/listings/mylistings/<%= listing.listingId %>/orders" class="btn btn-sm btn-outline-dark">Orders</a>
+                            <% if (listing.status === "active") { %>
+                              <form action="/listings/mylistings/<%= listing.listingId %>/maintenance" method="post" class="m-0">
+                                <button class="btn btn-sm btn-outline-danger">Maintenance</button>
+                              </form>
+                            <% } else { %>
+                              <form action="/listings/mylistings/<%= listing.listingId %>/active" method="post" class="m-0">
+                                <button class="btn btn-sm btn-outline-success">Active</button>
+                              </form>
+                            <% } %>
                 </div>
               </td>
             </tr>

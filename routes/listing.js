@@ -26,6 +26,12 @@ router.get("/mylistings", isLoggedIn, wrapAsync(listingController.myListings));
 
 router.get("/mylistings/:id/orders", isLoggedIn, wrapAsync(listingController.renderListingOrders));
 
+router.post("/mylistings/:id/maintenance", isLoggedIn, isOwner, wrapAsync(listingController.markMaintenance));
+router.post("/mylistings/:id/active", isLoggedIn, isOwner, wrapAsync(listingController.setListingActive));
+
+router.post("/:id/maintenance", isLoggedIn, isOwner, wrapAsync(listingController.markMaintenance));
+router.post("/:id/active", isLoggedIn, isOwner, wrapAsync(listingController.setListingActive));
+
 router.get("/reservations", isLoggedIn, wrapAsync(listingController.renderReservationsPage));
 
 router.get("/reservations/:sessionId/receipt", isLoggedIn, wrapAsync(listingController.renderReceipt));

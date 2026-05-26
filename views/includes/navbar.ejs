@@ -11,9 +11,6 @@
       <div class="collapse navbar-collapse bg-body-dark" id="navbarNavAltMarkup">
         <div class="navbar-nav nav-primary">
           <a class="nav-link" href="/listings">Explore</a>
-          <% if (currUser) { %>
-            <a class="nav-link" href="/listings/reservations">Reservations</a>
-          <% } %>
         </div>
 
 
@@ -47,6 +44,7 @@
               <li><span class="dropdown-item-text">Signed in as <strong><%= currUser.username %></strong></span></li>
               <li><hr class="dropdown-divider"></li>
               <li><a class="dropdown-item" href="/listings/mylistings">My listings</a></li>
+              <li><a class="dropdown-item" href="/listings/reservations">Reservations</a></li>
               <li><a class="dropdown-item" href="/profile/edit">Edit profile</a></li>
               <li><a class="dropdown-item" href="/logout">Log out</a></li>
             </ul>
