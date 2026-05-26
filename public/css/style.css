@@ -720,6 +720,92 @@ body {
   .reviews-grid {
     grid-template-columns: 1fr;
   }
+
+  .review-item {
+    padding: 1rem 1rem;
+    padding-bottom: 2.5rem;
+    border-radius: 0.85rem;
+    gap: 0.35rem;
+  }
+
+  .review-head {
+    gap: 0.6rem;
+  }
+
+  .review-avatar {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+  }
+
+  .review-name {
+    font-size: 0.95rem;
+  }
+
+  .review-subtitle,
+  .review-date {
+    font-size: 0.8rem;
+  }
+
+  .review-item .card-text {
+    font-size: 0.9rem;
+  }
+
+  .review-item .btn.btn-dark {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .show-more-link {
+    font-size: 0.75rem;
+  }
+
+  .review-overlay-inner {
+    padding: 0.75rem;
+    padding-top: 2rem;
+  }
+
+  .overlay-close {
+    padding: 0.2rem 0.4rem;
+    font-size: 0.85rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .review-item {
+    padding: 0.85rem 0.85rem;
+    padding-bottom: 2rem;
+  }
+
+  .review-head {
+    gap: 0.5rem;
+  }
+
+  .review-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .review-name {
+    font-size: 0.85rem;
+  }
+
+  .review-subtitle,
+  .review-date {
+    font-size: 0.75rem;
+  }
+
+  .review-item .card-text {
+    font-size: 0.85rem;
+  }
+
+  .reviews-grid {
+    gap: 1rem;
+  }
+
+  .review-item .starability-result {
+    margin: 0.1rem 0 0.3rem;
+  }
 }
 
 .listing-reviews.is-empty .reviews-summary {
@@ -847,6 +933,25 @@ body {
 
   .gallery-side {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .reviews-layout {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .reviews-layout.no-form {
+    grid-template-columns: 1fr;
+  }
+
+  .reviews-form {
+    position: static;
+    margin-left: 0;
+  }
+
+  .listing-reviews-section {
+    margin-right: auto;
+    padding-left: 0;
   }
 }
 

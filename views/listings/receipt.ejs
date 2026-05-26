@@ -89,6 +89,7 @@
       align-items: flex-start;
       gap: 1.5rem;
       margin-bottom: 1.5rem;
+      flex-wrap: wrap;
     }
 
     .receipt-brand {
@@ -125,6 +126,7 @@
       text-align: right;
       font-size: 0.9rem;
       color: #6b7280;
+      width: 100%;
     }
 
     .receipt-table thead th {
@@ -146,6 +148,31 @@
       background: #f3f4f6;
       font-weight: 700;
     }
+
+    @media (max-width: 767.98px) {
+      .receipt-header {
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .receipt-meta {
+        text-align: left;
+        width: 100%;
+      }
+
+      .receipt-meta .d-flex {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+      }
+
+      .receipt-title {
+        font-size: 1.3rem;
+      }
+
+      .receipt-table {
+        font-size: 0.9rem;
+      }
+    }
   </style>
   <div class="receipt-header">
     <div class="receipt-brand">
@@ -166,14 +193,14 @@
     </div>
   </div>
 
-  <div class="row mb-3">
-    <div class="col-6">
+  <div class="row mb-3 g-3">
+    <div class="col-12 col-md-6">
       <h6 class="mb-1">Invoice To</h6>
       <div><strong><%= record.customerName || 'Guest' %></strong></div>
       <div><%= record.customerEmail || '—' %></div>
       <div class="text-muted"><%= (listing && listing.location) || record.listingLocation || '' %> <% if ((listing && listing.country) || record.listingCountry) { %>, <%= (listing && listing.country) || record.listingCountry %><% } %></div>
     </div>
-    <div class="col-6 text-end">
+    <div class="col-12 col-md-6 text-md-end">
       <div><strong>Invoice #</strong> <%= String((record && record.sessionId) || (record && record.paymentIntentId) || '').slice(0, 12) %></div>
       <div class="text-muted"><strong>Date:</strong> <%= formatShortDate((record && record.reservationDate) ? record.reservationDate : ((record && record.sessionCreatedAt) ? record.sessionCreatedAt : new Date())) %></div>
       <div class="text-muted"><strong>Booked For:</strong> <%= getInclusiveBookingDays(record) %> day(s)</div>
