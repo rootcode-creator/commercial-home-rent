@@ -23,9 +23,8 @@
                             <label for="description" class="form-label">
                                 <span class="text-danger">*</span> Description
                             </label>
-                            <textarea id="description" name="listing[description]" placeholder="Describe your listing" rows="3" class="form-control" required minlength="10" maxlength="500" style="resize: none; overflow: hidden;"></textarea>
-                            <small id="descCount" class="text-muted"></small>
-                            <div class="invalid-feedback">Please provide a description (10-500 characters).</div>
+                            <textarea id="description" name="listing[description]" placeholder="Describe your listing" rows="4" class="form-control" required minlength="100" style="resize: vertical; overflow: auto;"></textarea>
+                            <div class="invalid-feedback">Please provide a description (minimum 100 characters).</div>
                         </div>
 
                         <!-- Image Upload -->
@@ -262,34 +261,7 @@
             // Initialize preview on page load
             window.addEventListener('load', function () {
                 updatePreview();
-                // Initialize description auto-resize and char count
-                const desc = document.getElementById('description');
-                const descCount = document.getElementById('descCount');
-                if (desc) {
-                    const max = parseInt(desc.getAttribute('maxlength') || '500', 10);
-                    function autoResizeTextarea(el) {
-                        el.style.height = 'auto';
-                        el.style.height = (el.scrollHeight) + 'px';
-                    }
-                    function updateCharCount() {
-                        if (!descCount) return;
-                        const len = desc.value.length;
-                        if (len === 0) {
-                            descCount.textContent = '';
-                        } else {
-                            descCount.textContent = `${len}/${max}`;
-                        }
-                        if (len > max) descCount.className = 'text-danger'; else descCount.className = 'text-muted';
-                    }
-                    // bind
-                    desc.addEventListener('input', function () {
-                        autoResizeTextarea(desc);
-                        updateCharCount();
-                    });
-                    // run once to size to initial content
-                    autoResizeTextarea(desc);
-                    updateCharCount();
-                }
+                // Keep textarea scrollable; min-length validated on submit (100 chars)
             });
         </script>
     </body>

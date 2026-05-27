@@ -39,4 +39,14 @@ router.route("/profile/edit")
   .get(isLoggedIn, userControllers.renderEditProfileForm)
   .post(isLoggedIn, upload.single("profile[image]"), wrapAsync(userControllers.updateProfile));
 
+// Dummy messaging page (functionality coming soon)
+router.get('/users/:id/message', wrapAsync(async (req, res) => {
+  const host = await User.findById(req.params.id).lean();
+  if (!host) {
+    req.flash('error', 'User not found');
+    return res.redirect('back');
+  }
+  return res.render('users/message.ejs', { host });
+}));
+
 module.exports = router;

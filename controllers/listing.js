@@ -413,6 +413,7 @@ module.exports.index = async (req, res) => {
     }
   }
 
+  const pageTitle = 'Wanderlust — Vacation rentals, cabins, and more';
   return res.render("listings/index.ejs", {
     allListings,
     searchQuery,
@@ -420,7 +421,9 @@ module.exports.index = async (req, res) => {
     selectedCategoryLabel: categoryLabels[selectedCategory] || "",
     selectedCategoryCount: selectedCategory ? allListings.length : null,
     isTrending,
+    pageTitle,
   });
+  
 };
 
 module.exports.myListings = async (req, res) => {
@@ -593,7 +596,61 @@ module.exports.showListing = async (req, res) => {
     req.flash("error", getListingStatusMessage(listing.status));
     return res.redirect("/listings");
   }
-  return res.render("listings/show.ejs", { listing });
+
+  let hostHostingYears = 1;
+  if (listing.owner && listing.owner._id) {
+    const firstHostListing = await Listing.findOne({ owner: listing.owner._id })
+      .sort({ createdAt: 1, _id: 1 })
+      .select("createdAt _id");
+
+    if (firstHostListing) {
+      const firstListingDate = firstHostListing.createdAt ||
+        (firstHostListing._id && typeof firstHostListing._id.getTimestamp === "function"
+          ? firstHostListing._id.getTimestamp()
+          : null);
+
+      if (firstListingDate) {
+        const years = Math.floor((Date.now() - new Date(firstListingDate).getTime()) / (1000 * 60 * 60 * 24 * 365));
+        hostHostingYears = Math.max(1, years);
+      }
+    }
+  }
+
+  // Aggregate review count and weighted average rating across all listings owned by this host.
+  let hostAggregatedStats = { totalReviewCount: 0, averageRating: 0 };
+  if (listing.owner && listing.owner._id) {
+    const stats = await Listing.aggregate([
+      { $match: { owner: listing.owner._id } },
+      { $project: { reviews: 1 } },
+      { $unwind: "$reviews" },
+      {
+        $lookup: {
+          from: "reviews",
+          localField: "reviews",
+          foreignField: "_id",
+          as: "reviewDoc",
+        },
+      },
+      { $unwind: "$reviewDoc" },
+      {
+        $group: {
+          _id: null,
+          totalReviewCount: { $sum: 1 },
+          averageRating: { $avg: "$reviewDoc.rating" },
+        },
+      },
+    ]);
+
+    if (stats.length > 0) {
+      hostAggregatedStats = {
+        totalReviewCount: stats[0].totalReviewCount || 0,
+        averageRating: stats[0].averageRating || 0,
+      };
+    }
+  }
+
+  const pageTitle = listing && listing.title ? `${listing.title} — Wanderlust` : 'Wanderlust';
+  return res.render("listings/show.ejs", { listing, hostAggregatedStats, hostHostingYears, pageTitle });
 };
 
 

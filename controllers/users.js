@@ -78,7 +78,7 @@ module.exports.renderEditProfileForm = (req, res) => {
 };
 
 module.exports.updateProfile = async (req, res) => {
-    const { displayName } = req.body;
+    const { displayName, bio } = req.body;
     const user = await User.findById(req.user._id);
     if (!user) {
         req.flash("error", "User not found.");
@@ -95,20 +95,26 @@ module.exports.updateProfile = async (req, res) => {
         user.displayName = trimmedName;
         hasUpdates = true;
     }
-        if (!req.file) {
-            req.flash("error", "Please upload a profile picture.");
-            return res.redirect("/users/profile/edit");
+    const trimmedBio = typeof bio === 'string' ? bio.trim() : '';
+    if (trimmedBio) {
+        if (trimmedBio.length > 1000) {
+            req.flash('error', 'Bio cannot exceed 1000 characters.');
+            return res.redirect('/users/profile/edit');
         }
-
+        user.bio = trimmedBio;
+        hasUpdates = true;
+    }
+    if (req.file) {
         user.avatar = {
             url: req.file.path,
             filename: req.file.filename,
         };
         hasUpdates = true;
+    }
 
     if (!hasUpdates) {
-        req.flash("error", "Please upload a profile picture.");
-        return res.redirect("/users/profile/edit");
+        req.flash('error', 'No changes submitted. Please update your profile.');
+        return res.redirect('/users/profile/edit');
     }
 
     await user.save();

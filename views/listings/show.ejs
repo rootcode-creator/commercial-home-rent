@@ -26,8 +26,9 @@
         <img src="<%= listing.image.url %>" class="gallery-img" alt="listing primary image" />
       </div>
       <div class="gallery-side">
-        <img src="<%= (listing.images && listing.images[0]) ? listing.images[0].url : listing.image.url %>" class="gallery-img" alt="listing image 1" />
-        <img src="<%= (listing.images && listing.images[1]) ? listing.images[1].url : listing.image.url %>" class="gallery-img" alt="listing image 2" />
+        <% const galleryImages = (listing.images && listing.images.length > 0) ? listing.images : [listing.image, listing.image]; %>
+        <img src="<%= galleryImages[0] ? galleryImages[0].url : listing.image.url %>" class="gallery-img" alt="listing image 1" />
+        <img src="<%= galleryImages[1] ? galleryImages[1].url : listing.image.url %>" class="gallery-img" alt="listing image 2" />
       </div>
     </div>
 
@@ -50,16 +51,43 @@
 
             <div class="listing-divider"></div>
 
-            <p class="card-text">
-              <i class="fa-solid fa-audio-description"></i> &nbsp; <%= listing.description %>
+            <% const fullDesc = listing.description || ''; const descLimit = 300; const isLongDesc = fullDesc.length > descLimit; %>
+            <p class="card-text description-preview">
+              <%= isLongDesc ? (fullDesc.substring(0, descLimit) + '...') : fullDesc %>
             </p>
-            <p class="card-text">
-              <i class="fa-solid fa-location-dot"></i> &nbsp; <%= listing.location %>
-            </p>
+            <% if (isLongDesc) { %>
+            <div class="desc-actions mt-3">
+              <button class="btn show-more-btn" data-bs-toggle="modal" data-bs-target="#descModal">Show more</button>
+            </div>
+            <% } %>
 
-            <p class="card-text">
-              <i class="fa-solid fa-flag"></i> &nbsp;<%= listing.country %>
-            </p>
+            <% const offers = [
+              { icon: 'fa-solid fa-door-closed', label: 'Lock on bedroom door' },
+              { icon: 'fa-solid fa-kitchen-set', label: 'Kitchen' },
+              { icon: 'fa-solid fa-wifi', label: 'Wifi' },
+              { icon: 'fa-solid fa-briefcase', label: 'Dedicated workspace' },
+              { icon: 'fa-solid fa-car-side', label: 'Free parking on premises' },
+              { icon: 'fa-solid fa-tv', label: 'TV' },
+              { icon: 'fa-solid fa-elevator', label: 'Elevator' },
+              { icon: 'fa-solid fa-soap', label: 'Washer' },
+              { icon: 'fa-solid fa-snowflake', label: 'Air conditioning' },
+              { icon: 'fa-solid fa-wind', label: 'Dryer' },
+            ]; %>
+
+            <div class="offers-section mt-5">
+              <h4 class="offers-title">What this place offers</h4>
+              <div class="offers-grid">
+                <% offers.forEach((offer) => { %>
+                  <div class="offer-item">
+                    <i class="<%= offer.icon %>"></i>
+                    <span><%= offer.label %></span>
+                  </div>
+                <% }) %>
+              </div>
+              <button type="button" class="btn show-more-btn offers-more-btn" data-bs-toggle="modal" data-bs-target="#amenitiesModal">Show all 43 amenities</button>
+            </div>
+
+            <!-- location moved to 'Where you'll be' section below -->
           </div>
         </div>
 
@@ -82,7 +110,8 @@
         <div class="card listing-booking">
           <div class="card-body">
             <p class="card-text listing-price">
-              &#2547; &nbsp; <%= listing.price.toLocaleString("en-BN") %> /night
+              <span class="listing-currency">&#2547; &nbsp; <%= listing.price.toLocaleString("en-BN") %></span>
+              <span class="listing-per-night">/night</span>
             </p>
             <% if (currUser && !ownerIsCurrentUser) { %>
               <% if (listing.status === "maintenance") { %>
@@ -164,7 +193,8 @@
               </div>
 
             <div class="reviews-grid">
-              <% for(review of reviews){ %>
+              <% const visibleReviews = reviews.slice(0,4); %>
+              <% for(review of visibleReviews){ %>
                 <% const reviewDate = review.createdAt ? new Date(review.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : ""; %>
                 
                 <div class="review-item">
@@ -179,15 +209,23 @@
                     <div>
                       <h5 class="card-title review-name">@<%= (review.author && review.author.username) || 'Unknown' %></h5>
                       <% const reviewCity = review.author && review.author.city ? review.author.city : null; %>
-                      <% if (reviewCity && reviewDate) { %>
-                        <p class="text-muted small mb-0"><%= reviewCity %> , <%= reviewDate %></p>
-                      <% } else if (reviewCity) { %>
-                        <p class="text-muted small mb-0"><%= reviewCity %></p>
-                      <% } else if (reviewDate) { %>
-                        <p class="text-muted small mb-0"><%= reviewDate %></p>
+                      <% if (reviewCity) { %>
+                        <p class="text-muted small mb-0 review-city"><%= reviewCity %></p>
                       <% } %>
-                      <p class="starability-result card-text" data-rating="<%= review.rating %>"></p>
                     </div>
+                  </div>
+                  <div class="review-meta">
+                    <div class="inline-stars" aria-hidden="true">
+                      <% for (let s = 1; s <= 5; s++) { %>
+                        <% if ((review.rating || 0) >= s) { %>
+                          <i class="fa-solid fa-star" aria-hidden="true"></i>
+                        <% } else { %>
+                          <i class="fa-regular fa-star" aria-hidden="true"></i>
+                        <% } %>
+                      <% } %>
+                    </div>
+                    <span class="meta-dot">•</span>
+                    <p class="text-muted small mb-0 review-date"><%= reviewDate %></p>
                   </div>
 
                   <% const fullComment = review.comment || ""; const isLongComment = fullComment.length > 200; %>
@@ -213,6 +251,76 @@
                 </div>
               <% } %>
             </div>
+            <% if (reviews.length > 4) { %>
+              <div class="mt-3">
+                <button type="button" class="show-all-reviews-btn" data-bs-toggle="modal" data-bs-target="#allReviewsModal">
+                  Show all <%= reviews.length %> reviews
+                </button>
+              </div>
+
+              <!-- All reviews modal -->
+              <div class="modal fade" id="allReviewsModal" tabindex="-1" aria-labelledby="allReviewsModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                  <div class="modal-content">
+                    <div class="modal-header">
+                      <h5 class="modal-title" id="allReviewsModalLabel">All reviews (<%= reviews.length %>)</h5>
+                      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                      <div class="reviews-grid reviews-grid-modal">
+                        <% for (const review of reviews) { %>
+                          <% const reviewDate = review.createdAt ? new Date(review.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" }) : ""; %>
+                          <div class="review-item">
+                            <div class="review-head">
+                                <div class="review-avatar">
+                                  <% if (review.author && review.author.avatar && review.author.avatar.url) { %>
+                                    <img src="<%= review.author.avatar.url %>" alt="Profile" class="review-avatar-image" />
+                                  <% } else { %>
+                                    <%= (review.author.username || "U").charAt(0).toUpperCase() %>
+                                  <% } %>
+                                </div>
+                                <div>
+                                  <h5 class="card-title review-name">@<%= (review.author && review.author.username) || 'Unknown' %></h5>
+                                  <% const reviewCity = review.author && review.author.city ? review.author.city : null; %>
+                                  <% if (reviewCity) { %>
+                                    <p class="text-muted small mb-0 review-city"><%= reviewCity %></p>
+                                  <% } %>
+                                </div>
+                              </div>
+                              <div class="review-meta">
+                                <div class="inline-stars" aria-hidden="true">
+                                  <% for (let s = 1; s <= 5; s++) { %>
+                                    <% if ((review.rating || 0) >= s) { %>
+                                      <i class="fa-solid fa-star" aria-hidden="true"></i>
+                                    <% } else { %>
+                                      <i class="fa-regular fa-star" aria-hidden="true"></i>
+                                    <% } %>
+                                  <% } %>
+                                </div>
+                                <span class="meta-dot">•</span>
+                                <p class="text-muted small mb-0 review-date"><%= reviewDate %></p>
+                              </div>
+                            <% const fullComment = review.comment || ""; const isLongComment = fullComment.length > 200; %>
+                            <div class="card-text mb-3 review-comment">
+                              <div class="review-preview"><%= fullComment %></div>
+                              <% if (isLongComment) { %>
+                                <a href="#" class="show-more-link small">Show more</a>
+                                <div class="review-overlay" aria-hidden="true" style="display:none;">
+                                  <div class="review-overlay-inner">
+                                    <button class="overlay-close btn btn-sm btn-outline-dark">Close</button>
+                                    <div class="review-full"><%= fullComment %></div>
+                                  </div>
+                                </div>
+                              <% } %>
+                            </div>
+                          </div>
+                        <% } %>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            <% } %>
           </div>
           <% } else { %>
           <div class="listing-reviews is-empty">
@@ -232,13 +340,269 @@
       </div>
     </div>
 
+    <% const rawLocation = [listing.location, listing.country].filter(Boolean).join(', '); const displayLocation = rawLocation.replace(/\b\w/g, (char) => char.toUpperCase()); %>
     <div class="listing-map">
       <h3>Where you'll be</h3>
-      <div id="map"></div>
+      <div class="where-youll-be">
+        <p class="place-full"><%= displayLocation %></p>
+        <div id="map" class="map-frame"></div>
+      </div>
     </div>
+    
+    <% // Host section placed below the map %>
+    <% const host = owner || {}; const hostName = host.username || 'Host'; const hostAvatar = (host.avatar && host.avatar.url) ? host.avatar.url : '/images/default-avatar.png'; const hostReviewCount = (typeof hostAggregatedStats !== 'undefined' && typeof hostAggregatedStats.totalReviewCount === 'number') ? hostAggregatedStats.totalReviewCount : 0; const hostAvgRating = (typeof hostAggregatedStats !== 'undefined' && typeof hostAggregatedStats.averageRating === 'number' && hostReviewCount > 0) ? Number(hostAggregatedStats.averageRating).toFixed(2) : '0.0'; const yearsHosting = (typeof hostHostingYears === 'number' && hostHostingYears > 0) ? hostHostingYears : 1;
+    %>
+    <section class="host-section">
+      <h3>Meet your host</h3>
+      <div class="host-card">
+        <div class="host-card-inner">
+          <div class="host-left">
+            <div class="host-mini-card">
+              <div class="mini-avatar-wrap">
+                <img src="<%= hostAvatar %>" alt="<%= hostName %>" class="mini-avatar-img" />
+                <% if (host.isSuperhost || host.isSuperHost) { %>
+                  <div class="avatar-badge"><i class="fa-solid fa-check"></i></div>
+                <% } %>
+              </div>
+              <div class="mini-right">
+                <div class="mini-stats">
+                  <div class="mini-stat">
+                    <div class="mini-stat-value"><%= hostReviewCount %></div>
+                    <div class="mini-stat-label">Reviews</div>
+                  </div>
+                  <div class="mini-stat">
+                    <div class="mini-stat-value"><%= hostAvgRating %> <i class="fa-solid fa-star" style="color:#111; font-size:0.8rem;"></i></div>
+                    <div class="mini-stat-label">Rating</div>
+                  </div>
+                  <div class="mini-stat">
+                    <div class="mini-stat-value"><%= yearsHosting %></div>
+                    <div class="mini-stat-label">Year hosting</div>
+                  </div>
+                </div>
+              </div>
+              <div class="mini-name">
+                <div class="mini-title"><%= hostName %></div>
+                <% if (host.isSuperhost || host.isSuperHost) { %>
+                  <div class="mini-subtitle"><i class="fa-solid fa-trophy" style="color:#6b7280; margin-right:6px"></i> <span class="host-badge">Superhost</span></div>
+                <% } %>
+              </div>
+            </div>
+
+            <ul class="host-info-list">
+              <% if (host.school) { %>
+                <li><i class="fa-solid fa-map-pin"></i> <%= host.school %></li>
+              <% } %>
+              <% if (host.work) { %>
+                <li><i class="fa-solid fa-briefcase"></i> <%= host.work %></li>
+              <% } %>
+              <% if (host.funFact) { %>
+                <li><i class="fa-solid fa-lightbulb"></i> <%= host.funFact %></li>
+              <% } %>
+            </ul>
+          </div>
+
+          <div class="host-right">
+            <h4><%= hostName %> is a <%= (host.isSuperhost || host.isSuperHost) ? 'Superhost' : 'host' %></h4>
+            <p class="host-intro text-muted"> <%= host.bio || host.about || 'Hosts are experienced, highly rated hosts who are committed to providing great stays for guests.' %> </p>
+
+            <h5 class="host-details-title">Host details</h5>
+            <% /* cohosts intentionally removed to match simplified right column layout */ %>
+            <% const respRate = (host.responseRate && String(host.responseRate).trim()) ? host.responseRate : '100%'; const respTime = (host.responseTime && String(host.responseTime).trim()) ? host.responseTime : 'an hour'; %>
+            <ul class="host-details-list">
+              <li>Response rate: <strong><%= respRate %></strong></li>
+              <li>Responds within <strong><%= respTime %></strong></li>
+            </ul>
+
+            <a href="/users/<%= host._id %>/message" class="btn btn-outline-secondary message-host">Message host</a>
+
+            <hr class="host-separator" />
+          </div>
+        </div>
+      </div>
+    </section>
+    <!-- Things to know -->
+    <section class="things-section">
+      <h3>Things to know</h3>
+      <div class="things-grid">
+        <div class="thing-item">
+          <i class="fa-regular fa-calendar thing-icon" aria-hidden="true"></i>
+          <h4>Cancellation policy</h4>
+          <p class="thing-desc"><%= listing.cancellationPolicy ? listing.cancellationPolicy : 'Free cancellation before 7 days. Cancel before check-in for a partial refund.' %></p>
+          <a href="#" class="thing-link">Learn more</a>
+        </div>
+
+        <div class="thing-item">
+          <i class="fa-solid fa-key thing-icon" aria-hidden="true"></i>
+          <h4>House rules</h4>
+          <p class="thing-desc"><%- listing.houseRules ? (Array.isArray(listing.houseRules) ? listing.houseRules.slice(0,3).join('<br/>') : listing.houseRules) : 'Check-in after 3:00 PM<br/>Checkout before 12:00 PM<br/>1 guest maximum' %></p>
+          <a href="#" class="thing-link">Learn more</a>
+        </div>
+
+        <div class="thing-item">
+          <i class="fa-solid fa-shield-halved thing-icon" aria-hidden="true"></i>
+          <h4>Safety & property</h4>
+          <p class="thing-desc"><%- listing.safetyFeatures ? (Array.isArray(listing.safetyFeatures) ? listing.safetyFeatures.slice(0,3).join('<br/>') : listing.safetyFeatures) : 'Carbon monoxide alarm<br/>Smoke alarm' %></p>
+          <a href="#" class="thing-link">Learn more</a>
+        </div>
+      </div>
+    </section>
   </div>
 
  <script src="/js/map.js"></script>
+  <!-- Description modal -->
+  <div class="modal fade" id="descModal" tabindex="-1" aria-labelledby="descModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="descModalLabel">About this space</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="modal-desc-content">
+            <%= listing.description %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Amenities modal -->
+  <div class="modal fade" id="amenitiesModal" tabindex="-1" aria-labelledby="amenitiesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content amenities-modal">
+        <div class="modal-header amenities-modal-header">
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body amenities-modal-body">
+          <h2 class="amenities-modal-title" id="amenitiesModalLabel">What this place offers</h2>
+
+          <% const amenitiesGroups = [
+            {
+              title: 'Bathroom',
+              items: [
+                { icon: 'fa-solid fa-wind', label: 'Hair dryer' },
+                { icon: 'fa-solid fa-soap', label: 'Shampoo' },
+                { icon: 'fa-solid fa-toilet', label: 'Bidet' },
+                { icon: 'fa-solid fa-shower', label: 'Hot water' },
+                { icon: 'fa-solid fa-soap', label: 'Shower gel' },
+              ],
+            },
+            {
+              title: 'Bedroom and laundry',
+              items: [
+                { icon: 'fa-solid fa-soap', label: 'Washer' },
+                { icon: 'fa-solid fa-wind', label: 'Dryer' },
+                { icon: 'fa-solid fa-box-open', label: 'Essentials' },
+                { icon: 'fa-solid fa-bath', label: 'Towels, bed sheets, soap, and toilet paper' },
+                { icon: 'fa-solid fa-shirt', label: 'Hangers' },
+                { icon: 'fa-solid fa-bed', label: 'Bed linens' },
+                { icon: 'fa-solid fa-box-archive', label: 'Extra pillows and blankets' },
+                { icon: 'fa-solid fa-moon', label: 'Room-darkening shades' },
+                { icon: 'fa-solid fa-shirt', label: 'Iron' },
+                { icon: 'fa-solid fa-shirt', label: 'Drying rack for clothing' },
+                { icon: 'fa-solid fa-box-archive', label: 'Clothing storage' },
+              ],
+            },
+            {
+              title: 'Entertainment',
+              items: [
+                { icon: 'fa-solid fa-tv', label: 'TV' },
+                { icon: 'fa-solid fa-music', label: 'Sound system' },
+                { icon: 'fa-solid fa-book', label: 'Books and reading material' },
+              ],
+            },
+            {
+              title: 'Heating and cooling',
+              items: [
+                { icon: 'fa-solid fa-snowflake', label: 'Air conditioning' },
+                { icon: 'fa-solid fa-fan', label: 'Ceiling fan' },
+              ],
+            },
+            {
+              title: 'Privacy and safety',
+              items: [
+                { icon: 'fa-solid fa-door-closed', label: 'Lock on bedroom door' },
+                { icon: 'fa-solid fa-circle-exclamation', label: 'Smoke alarm' },
+                { icon: 'fa-solid fa-triangle-exclamation', label: 'Carbon monoxide alarm' },
+                { icon: 'fa-solid fa-kit-medical', label: 'First aid kit' },
+              ],
+            },
+            {
+              title: 'Internet and office',
+              items: [
+                { icon: 'fa-solid fa-wifi', label: 'Wifi' },
+                { icon: 'fa-solid fa-briefcase', label: 'Dedicated workspace' },
+              ],
+            },
+            {
+              title: 'Kitchen and dining',
+              items: [
+                { icon: 'fa-solid fa-kitchen-set', label: 'Kitchen' },
+                { icon: 'fa-solid fa-utensils', label: 'Space where guests can cook their own meals' },
+                { icon: 'fa-solid fa-snowflake', label: 'Refrigerator' },
+                { icon: 'fa-solid fa-bolt', label: 'Microwave' },
+                { icon: 'fa-solid fa-utensils', label: 'Cooking basics' },
+                { icon: 'fa-solid fa-utensils', label: 'Pots and pans, oil, salt and pepper' },
+                { icon: 'fa-solid fa-utensils', label: 'Dishes and silverware' },
+                { icon: 'fa-solid fa-utensils', label: 'Bowls, chopsticks, plates, cups, etc.' },
+                { icon: 'fa-solid fa-fire', label: 'Stove' },
+                { icon: 'fa-solid fa-mug-hot', label: 'Hot water kettle' },
+                { icon: 'fa-solid fa-bread-slice', label: 'Toaster' },
+                { icon: 'fa-solid fa-table', label: 'Dining table' },
+                { icon: 'fa-solid fa-mug-saucer', label: 'Coffee' },
+              ],
+            },
+            {
+              title: 'Location features',
+              items: [
+                { icon: 'fa-solid fa-door-open', label: 'Private entrance' },
+                { icon: 'fa-solid fa-building', label: 'Separate street or building entrance' },
+              ],
+            },
+            {
+              title: 'Parking and facilities',
+              items: [
+                { icon: 'fa-solid fa-car', label: 'Free parking on premises' },
+                { icon: 'fa-solid fa-car', label: 'Free street parking' },
+                { icon: 'fa-solid fa-elevator', label: 'Elevator' },
+                { icon: 'fa-solid fa-building', label: 'The home or building has an elevator that’s at least 52 inches deep and a doorway at least 32 inches wide' },
+                { icon: 'fa-solid fa-car-side', label: 'Paid parking off premises' },
+              ],
+            },
+            {
+              title: 'Services',
+              items: [
+                { icon: 'fa-solid fa-key', label: 'Self check-in' },
+                { icon: 'fa-solid fa-lock', label: 'Lockbox' },
+              ],
+            },
+            {
+              title: 'Not included',
+              items: [
+                { icon: 'fa-solid fa-triangle-exclamation', label: 'Unavailable: Exterior security cameras on propertyExterior security cameras on property' },
+                { icon: 'fa-solid fa-triangle-exclamation', label: 'Unavailable: HeatingHeating' },
+              ],
+            },
+          ]; %>
+
+          <div class="amenities-list">
+            <% amenitiesGroups.forEach((group) => { %>
+              <section class="amenity-group">
+                <h3 class="amenity-group-title"><%= group.title %></h3>
+                <div class="amenity-group-list">
+                  <% group.items.forEach((item) => { %>
+                    <div class="amenity-row">
+                      <i class="<%= item.icon %>"></i>
+                      <span><%= item.label %></span>
+                    </div>
+                  <% }) %>
+                </div>
+              </section>
+            <% }) %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 <script>
   // Open overlay for full comment without changing card height
   (function(){
