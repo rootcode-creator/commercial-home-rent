@@ -38,20 +38,43 @@
         <div class="form-text">Optional — upload to change your avatar.</div>
       </div>
 
-      <% if (user && user.avatar && user.avatar.url) { %>
-      <div class="mb-3">
-        <label class="form-label">Current profile image</label>
-        <div>
-          <img src="<%= user.avatar.url %>" alt="Profile" style="width:64px;height:64px;object-fit:cover;border-radius:8px;" />
-        </div>
-      </div>
-      <% } %>
-
       <button class="btn btn-success">Save Changes</button>
     </form>
 
     <div class="profile-edit-preview">
-      <img src="" alt="Profile" class="profile-preview d-none" />
+      <div style="display: flex; gap: 2rem; align-items: flex-start;">
+        <% if (user && user.avatar && user.avatar.url) { %>
+        <div class="text-center">
+          <p class="form-label mb-2">Current Image</p>
+          <img src="<%= user.avatar.url %>" alt="Profile" style="width:140px;height:140px;object-fit:cover;border-radius:8px;" />
+        </div>
+        <% } %>
+        
+        <div id="previewContainer" class="text-center" style="visibility: hidden; height: 140px;">
+          <p class="form-label mb-2">Preview</p>
+          <img id="previewImage" src="" alt="Preview" style="width:140px;height:140px;object-fit:cover;border-radius:8px;" />
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+<script>
+  const profileImageInput = document.getElementById('profileImage');
+  const previewContainer = document.getElementById('previewContainer');
+  const previewImage = document.getElementById('previewImage');
+
+  profileImageInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        previewImage.src = event.target.result;
+        previewContainer.style.visibility = 'visible';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      previewContainer.style.visibility = 'hidden';
+    }
+  });
+</script>

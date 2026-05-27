@@ -110,7 +110,7 @@ body {
 
 .profile-edit {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 160px;
+  grid-template-columns: minmax(0, 1fr) 350px;
   gap: 2rem;
   align-items: start;
 }
