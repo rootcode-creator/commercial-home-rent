@@ -59,16 +59,6 @@ body {
 .nav-search-form {
   width: min(480px, 100%);
 }
-}
-
-.fa-snowflake {
-  color: #fe424d;
-  font-size: 2rem;
-}
-
-.nav-link {
-  color: #222222 !important;
-}
 
 .nav-avatar {
   display: flex;
@@ -410,6 +400,7 @@ body {
   min-height: 0;
   display: block;
   aspect-ratio: unset;
+}
 
 /* Avatar / dropdown custom styles */
 .nav-avatar {
@@ -489,11 +480,6 @@ body {
 
 @media (max-width: 576px) {
   .where-youll-be .place-full { font-size: 0.95rem; }
-}
-
-  object-fit: cover;
-  object-position: center;
-  border-radius: 0.9rem;
 }
 
 .gallery-main .gallery-img {
