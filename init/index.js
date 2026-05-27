@@ -6,6 +6,8 @@ const mongoose = require("mongoose");
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const initData = require("./data.js");
 const Listing = require("../models/listing.js");
+const AmenityCategory = require("../models/amenityCategory.js");
+const { defaultAmenityCategories } = require("../utils/amenityCatalog.js");
 
 // const MONGO_URL = "mongodb://127.0.0.1:27017/wanderlust";
 const dbUrl = process.env.ATLASDB_URL;
@@ -45,6 +47,8 @@ const initDatabase = async () => {
       console.warn(`Failed clearing collection ${key}:`, err.message);
     }
   }
+
+  await AmenityCategory.insertMany(defaultAmenityCategories);
   const seededListings = await Promise.all(
     initData.data.map(async (obj) => {
       const geometry = await getListingGeometry(obj);

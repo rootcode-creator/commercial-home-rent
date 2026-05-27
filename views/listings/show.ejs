@@ -61,7 +61,7 @@
             </div>
             <% } %>
 
-            <% const offers = [
+            <% const defaultOffers = [
               { icon: 'fa-solid fa-door-closed', label: 'Lock on bedroom door' },
               { icon: 'fa-solid fa-kitchen-set', label: 'Kitchen' },
               { icon: 'fa-solid fa-wifi', label: 'Wifi' },
@@ -72,7 +72,15 @@
               { icon: 'fa-solid fa-soap', label: 'Washer' },
               { icon: 'fa-solid fa-snowflake', label: 'Air conditioning' },
               { icon: 'fa-solid fa-wind', label: 'Dryer' },
-            ]; %>
+            ];
+            const customAmenities = Array.isArray(listing.amenities)
+              ? listing.amenities.map((item) => ({
+                  icon: item && item.icon ? item.icon : 'fa-solid fa-circle-check',
+                  label: item && item.label ? item.label : '',
+                })).filter((item) => item.label)
+              : [];
+            const offers = customAmenities.length > 0 ? customAmenities : defaultOffers;
+            const offersButtonLabel = 'Show all amenities'; %>
 
             <div class="offers-section mt-5">
               <h4 class="offers-title">What this place offers</h4>
@@ -84,7 +92,7 @@
                   </div>
                 <% }) %>
               </div>
-              <button type="button" class="btn show-more-btn offers-more-btn" data-bs-toggle="modal" data-bs-target="#amenitiesModal">Show all 43 amenities</button>
+              <button type="button" class="btn show-more-btn offers-more-btn" data-bs-toggle="modal" data-bs-target="#amenitiesModal"><%= offersButtonLabel %></button>
             </div>
 
             <!-- location moved to 'Where you'll be' section below -->
@@ -474,131 +482,49 @@
         </div>
         <div class="modal-body amenities-modal-body">
           <h2 class="amenities-modal-title" id="amenitiesModalLabel">What this place offers</h2>
+          <% const catalogGroups = Array.isArray(typeof amenityCatalogData !== 'undefined' ? amenityCatalogData : []) ? (typeof amenityCatalogData !== 'undefined' ? amenityCatalogData : []) : [];
+             const selectedLabels = new Set(customAmenities.map((item) => String(item.label || '').trim().toLowerCase()).filter(Boolean));
+             const groupedAmenities = catalogGroups.length > 0
+               ? catalogGroups.map((group) => ({
+                   title: group.name || group.title || 'Amenities',
+                   items: Array.isArray(group.items)
+                     ? group.items.filter((item) => {
+                         if (customAmenities.length === 0) {
+                           return true;
+                         }
+                         return selectedLabels.has(String(item.label || '').trim().toLowerCase());
+                       })
+                     : [],
+                 })).filter((group) => group.items.length > 0)
+               : [];
+             const showGroupedAmenities = groupedAmenities.length > 0; %>
 
-          <% const amenitiesGroups = [
-            {
-              title: 'Bathroom',
-              items: [
-                { icon: 'fa-solid fa-wind', label: 'Hair dryer' },
-                { icon: 'fa-solid fa-soap', label: 'Shampoo' },
-                { icon: 'fa-solid fa-toilet', label: 'Bidet' },
-                { icon: 'fa-solid fa-shower', label: 'Hot water' },
-                { icon: 'fa-solid fa-soap', label: 'Shower gel' },
-              ],
-            },
-            {
-              title: 'Bedroom and laundry',
-              items: [
-                { icon: 'fa-solid fa-soap', label: 'Washer' },
-                { icon: 'fa-solid fa-wind', label: 'Dryer' },
-                { icon: 'fa-solid fa-box-open', label: 'Essentials' },
-                { icon: 'fa-solid fa-bath', label: 'Towels, bed sheets, soap, and toilet paper' },
-                { icon: 'fa-solid fa-shirt', label: 'Hangers' },
-                { icon: 'fa-solid fa-bed', label: 'Bed linens' },
-                { icon: 'fa-solid fa-box-archive', label: 'Extra pillows and blankets' },
-                { icon: 'fa-solid fa-moon', label: 'Room-darkening shades' },
-                { icon: 'fa-solid fa-shirt', label: 'Iron' },
-                { icon: 'fa-solid fa-shirt', label: 'Drying rack for clothing' },
-                { icon: 'fa-solid fa-box-archive', label: 'Clothing storage' },
-              ],
-            },
-            {
-              title: 'Entertainment',
-              items: [
-                { icon: 'fa-solid fa-tv', label: 'TV' },
-                { icon: 'fa-solid fa-music', label: 'Sound system' },
-                { icon: 'fa-solid fa-book', label: 'Books and reading material' },
-              ],
-            },
-            {
-              title: 'Heating and cooling',
-              items: [
-                { icon: 'fa-solid fa-snowflake', label: 'Air conditioning' },
-                { icon: 'fa-solid fa-fan', label: 'Ceiling fan' },
-              ],
-            },
-            {
-              title: 'Privacy and safety',
-              items: [
-                { icon: 'fa-solid fa-door-closed', label: 'Lock on bedroom door' },
-                { icon: 'fa-solid fa-circle-exclamation', label: 'Smoke alarm' },
-                { icon: 'fa-solid fa-triangle-exclamation', label: 'Carbon monoxide alarm' },
-                { icon: 'fa-solid fa-kit-medical', label: 'First aid kit' },
-              ],
-            },
-            {
-              title: 'Internet and office',
-              items: [
-                { icon: 'fa-solid fa-wifi', label: 'Wifi' },
-                { icon: 'fa-solid fa-briefcase', label: 'Dedicated workspace' },
-              ],
-            },
-            {
-              title: 'Kitchen and dining',
-              items: [
-                { icon: 'fa-solid fa-kitchen-set', label: 'Kitchen' },
-                { icon: 'fa-solid fa-utensils', label: 'Space where guests can cook their own meals' },
-                { icon: 'fa-solid fa-snowflake', label: 'Refrigerator' },
-                { icon: 'fa-solid fa-bolt', label: 'Microwave' },
-                { icon: 'fa-solid fa-utensils', label: 'Cooking basics' },
-                { icon: 'fa-solid fa-utensils', label: 'Pots and pans, oil, salt and pepper' },
-                { icon: 'fa-solid fa-utensils', label: 'Dishes and silverware' },
-                { icon: 'fa-solid fa-utensils', label: 'Bowls, chopsticks, plates, cups, etc.' },
-                { icon: 'fa-solid fa-fire', label: 'Stove' },
-                { icon: 'fa-solid fa-mug-hot', label: 'Hot water kettle' },
-                { icon: 'fa-solid fa-bread-slice', label: 'Toaster' },
-                { icon: 'fa-solid fa-table', label: 'Dining table' },
-                { icon: 'fa-solid fa-mug-saucer', label: 'Coffee' },
-              ],
-            },
-            {
-              title: 'Location features',
-              items: [
-                { icon: 'fa-solid fa-door-open', label: 'Private entrance' },
-                { icon: 'fa-solid fa-building', label: 'Separate street or building entrance' },
-              ],
-            },
-            {
-              title: 'Parking and facilities',
-              items: [
-                { icon: 'fa-solid fa-car', label: 'Free parking on premises' },
-                { icon: 'fa-solid fa-car', label: 'Free street parking' },
-                { icon: 'fa-solid fa-elevator', label: 'Elevator' },
-                { icon: 'fa-solid fa-building', label: 'The home or building has an elevator that’s at least 52 inches deep and a doorway at least 32 inches wide' },
-                { icon: 'fa-solid fa-car-side', label: 'Paid parking off premises' },
-              ],
-            },
-            {
-              title: 'Services',
-              items: [
-                { icon: 'fa-solid fa-key', label: 'Self check-in' },
-                { icon: 'fa-solid fa-lock', label: 'Lockbox' },
-              ],
-            },
-            {
-              title: 'Not included',
-              items: [
-                { icon: 'fa-solid fa-triangle-exclamation', label: 'Unavailable: Exterior security cameras on propertyExterior security cameras on property' },
-                { icon: 'fa-solid fa-triangle-exclamation', label: 'Unavailable: HeatingHeating' },
-              ],
-            },
-          ]; %>
-
-          <div class="amenities-list">
-            <% amenitiesGroups.forEach((group) => { %>
-              <section class="amenity-group">
-                <h3 class="amenity-group-title"><%= group.title %></h3>
-                <div class="amenity-group-list">
-                  <% group.items.forEach((item) => { %>
-                    <div class="amenity-row">
-                      <i class="<%= item.icon %>"></i>
-                      <span><%= item.label %></span>
-                    </div>
-                  <% }) %>
+          <% if (showGroupedAmenities) { %>
+            <div class="amenities-list">
+              <% groupedAmenities.forEach((group) => { %>
+                <section class="amenity-group">
+                  <h3 class="amenity-group-title"><%= group.title %></h3>
+                  <div class="amenity-group-list">
+                    <% group.items.forEach((item) => { %>
+                      <div class="amenity-row">
+                        <i class="<%= item.icon %>" aria-hidden="true"></i>
+                        <span><%= item.label %></span>
+                      </div>
+                    <% }) %>
+                  </div>
+                </section>
+              <% }) %>
+            </div>
+          <% } else if (customAmenities.length > 0) { %>
+            <div class="amenities-list amenities-list-custom">
+              <% customAmenities.forEach((item) => { %>
+                <div class="amenity-row">
+                  <i class="<%= item.icon %>" aria-hidden="true"></i>
+                  <span><%= item.label %></span>
                 </div>
-              </section>
-            <% }) %>
-          </div>
+              <% }) %>
+            </div>
+          <% } %>
         </div>
       </div>
     </div>

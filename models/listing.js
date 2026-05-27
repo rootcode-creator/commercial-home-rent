@@ -35,6 +35,21 @@ const listingSchema = new Schema({
     },
     location: String,
     country: String,
+    amenities: {
+        type: [
+            {
+                icon: {
+                    type: String,
+                    default: "fa-solid fa-circle-check",
+                },
+                label: {
+                    type: String,
+                    required: true,
+                },
+            },
+        ],
+        default: [],
+    },
     reviews: [
         {
             type: Schema.Types.ObjectId,

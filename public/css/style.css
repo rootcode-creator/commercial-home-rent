@@ -2246,6 +2246,43 @@ body {
   font-size: 1.05rem;
 }
 
+.amenities-preview-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.amenity-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #111827;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+.amenity-chip i {
+  color: #111827;
+}
+
+.amenity-chip-remove {
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0;
+  cursor: pointer;
+}
+
+.amenity-chip-remove:hover {
+  color: #111827;
+}
+
 .file-input-wrapper {
   position: relative;
   margin-bottom: 0.15rem;

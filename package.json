@@ -8,6 +8,7 @@
    "scripts": {
       "test": "echo \"Error: no test specified\" && exit 1",
       "dev": "node app.js",
+      "seed:amenities": "node init/seed-amenities.js",
       "build": "echo \"No build step required\"",
       "start": "node app.js"
    },

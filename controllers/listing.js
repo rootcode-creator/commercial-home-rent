@@ -1,6 +1,8 @@
 const Listing = require("../models/listing.js");
 const PaymentRecord = require("../models/paymentRecord.js");
 const MyListing = require("../models/myListing.js");
+const AmenityCategory = require("../models/amenityCategory.js");
+const { defaultAmenityCategories } = require("../utils/amenityCatalog.js");
 const { sendBookingCancellationEmail } = require("./webhook.js");
 const mbxGeocoding = require('@mapbox/mapbox-sdk/services/geocoding');
 const fs = require('fs');
@@ -63,6 +65,80 @@ const getInclusiveBookingDays = (record) => {
   const toUtcDay = (date) => Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
   const diff = Math.round((toUtcDay(end) - toUtcDay(start)) / (24 * 60 * 60 * 1000));
   return Math.max(1, diff + 1);
+};
+
+const normalizeAmenity = (item) => {
+  if (!item) {
+    return null;
+  }
+
+  if (typeof item === "string") {
+    const label = item.trim();
+    if (!label) {
+      return null;
+    }
+    return {
+      icon: "fa-solid fa-circle-check",
+      label,
+    };
+  }
+
+  if (Array.isArray(item)) {
+    return normalizeAmenity(item[0]);
+  }
+
+  const icon = String(item.icon || item.fa || "fa-solid fa-circle-check").trim() || "fa-solid fa-circle-check";
+  const label = String(item.label || item.name || item.text || "").trim();
+  if (!label) {
+    return null;
+  }
+
+  return { icon, label };
+};
+
+const parseAmenitiesInput = (value) => {
+  if (!value) {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(normalizeAmenity).filter(Boolean);
+  }
+
+  if (typeof value === "object") {
+    if (value.icon || value.label || value.name || value.text) {
+      const normalized = normalizeAmenity(value);
+      return normalized ? [normalized] : [];
+    }
+
+    return Object.values(value).map(normalizeAmenity).filter(Boolean);
+  }
+
+  if (typeof value !== "string") {
+    return [];
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    return parseAmenitiesInput(parsed);
+  } catch (err) {
+    return trimmed
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const [iconPart, ...labelParts] = line.split("|");
+        const label = labelParts.length > 0 ? labelParts.join("|").trim() : line;
+        const icon = labelParts.length > 0 && iconPart ? iconPart.trim() : "fa-solid fa-circle-check";
+        return normalizeAmenity({ icon, label });
+      })
+      .filter(Boolean);
+  }
 };
 
 const loadPuppeteer = async () => {
@@ -649,8 +725,20 @@ module.exports.showListing = async (req, res) => {
     }
   }
 
+    let amenityCategories = await AmenityCategory.find().sort({ order: 1, name: 1 }).lean();
+    if (amenityCategories.length === 0) {
+      await AmenityCategory.insertMany(defaultAmenityCategories);
+      amenityCategories = await AmenityCategory.find().sort({ order: 1, name: 1 }).lean();
+    }
+
   const pageTitle = listing && listing.title ? `${listing.title} — Wanderlust` : 'Wanderlust';
-  return res.render("listings/show.ejs", { listing, hostAggregatedStats, hostHostingYears, pageTitle });
+    return res.render("listings/show.ejs", {
+      listing,
+      hostAggregatedStats,
+      hostHostingYears,
+      pageTitle,
+      amenityCatalogData: amenityCategories,
+    });
 };
 
 
@@ -825,9 +913,15 @@ module.exports.renderEditForm = async (req, res) => {
     return res.redirect("/listings");
   }
 
+  let amenityCategories = await AmenityCategory.find().sort({ order: 1, name: 1 }).lean();
+  if (amenityCategories.length === 0) {
+    await AmenityCategory.insertMany(defaultAmenityCategories);
+    amenityCategories = await AmenityCategory.find().sort({ order: 1, name: 1 }).lean();
+  }
+
   let orginalImageUrl = listing.image.url;
   orginalImageUrl.replace("/upload", "/upload/h_200,w_300");
-  return res.render("listings/edit.ejs", { listing, orginalImageUrl });
+  return res.render("listings/edit.ejs", { listing, orginalImageUrl, amenityCatalogData: amenityCategories });
 };
 
 
@@ -874,6 +968,24 @@ module.exports.updateListing = async (req, res) => {
   );
 
   req.flash("success", "Listing Updated!");
+  return res.redirect(`/listings/${id}`);
+};
+
+
+module.exports.updateAmenities = async (req, res) => {
+  const { id } = req.params;
+  const listing = await Listing.findById(id);
+
+  if (!listing) {
+    req.flash("error", "Listing you requested does not exist!");
+    return res.redirect("/listings");
+  }
+
+  const amenitiesInput = req.body?.amenities ?? req.body?.listing?.amenities;
+  listing.amenities = parseAmenitiesInput(amenitiesInput);
+  await listing.save();
+
+  req.flash("success", "Amenities updated!");
   return res.redirect(`/listings/${id}`);
 };
 

@@ -27,6 +27,8 @@ router.get("/mylistings", isLoggedIn, wrapAsync(listingController.myListings));
 
 router.get("/mylistings/:id/orders", isLoggedIn, wrapAsync(listingController.renderListingOrders));
 
+router.put("/:id/amenities", isLoggedIn, isOwner, wrapAsync(listingController.updateAmenities));
+
 router.post("/mylistings/:id/maintenance", isLoggedIn, isOwner, wrapAsync(listingController.markMaintenance));
 router.post("/mylistings/:id/active", isLoggedIn, isOwner, wrapAsync(listingController.setListingActive));
 
