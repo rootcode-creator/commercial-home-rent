@@ -42,15 +42,40 @@ const useMongoSessionStore =
 
 main()
   .then(() => {
-    // Connected to database (log removed for production)
+    // Connected to database
     startDailyExchangeRateRefresh();
   })
   .catch((err) => {
-    // Database connection error (logging removed)
+    console.error("Database connection error:", err.message);
+    process.exit(1);
   });
+
 async function main() {
-  await mongoose.connect(dbUrl);
+  if (!dbUrl) {
+    throw new Error("Missing ATLASDB_URL environment variable");
+  }
+  
+  await mongoose.connect(dbUrl, {
+    serverSelectionTimeoutMS: 5000,
+    connectTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
+    retryWrites: true,
+    w: "majority",
+  });
 }
+
+// Connection event listeners
+mongoose.connection.on("connected", () => {
+  console.log("MongoDB connected successfully");
+});
+
+mongoose.connection.on("error", (err) => {
+  console.error("MongoDB connection error:", err);
+});
+
+mongoose.connection.on("disconnected", () => {
+  console.warn("MongoDB disconnected");
+});
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
