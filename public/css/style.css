@@ -40,6 +40,17 @@ body {
   gap: 1.75rem;
 }
 
+/* Site logo sizing (scales crisply when using SVG) */
+.site-logo {
+  height: 56px;
+  width: auto;
+  display: block;
+}
+
+@media (min-width: 992px) {
+  .site-logo { height: 64px; }
+}
+
 .nav-primary,
 .nav-actions {
   align-items: center;
