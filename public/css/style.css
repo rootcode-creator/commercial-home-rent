@@ -23,8 +23,11 @@ body {
 
 /* Navbar */
 .navbar {
-  height: 5rem;
+  min-height: 5rem;
+  height: auto; /* allow taller logo without clipping */
   background-color: white;
+  display: flex;
+  align-items: center;
 }
 
 .navbar .container-fluid{
@@ -42,13 +45,18 @@ body {
 
 /* Site logo sizing (scales crisply when using SVG) */
 .site-logo {
-  height: 56px;
+  height: 72px;
   width: auto;
   display: block;
+  object-fit: contain;
 }
 
-@media (min-width: 992px) {
-  .site-logo { height: 64px; }
+@media (min-width: 768px) {
+  .site-logo { height: 88px; }
+}
+
+@media (min-width: 1200px) {
+  .site-logo { height: 104px; }
 }
 
 .nav-primary,
