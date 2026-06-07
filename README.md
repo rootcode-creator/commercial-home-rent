@@ -62,6 +62,8 @@ Key routes (based on `app.js`):
 - `/` — user routes (signup/login) handled by `routes/user.js`
 - `/listings` — listing routes handled by `routes/listing.js`
 - `/listings/:id/reviews` — reviews handled by `routes/review.js`
+- `/cart` — cart & payment routes handled by `routes/cart.js`
+- `/payments` — payment utilities & email resend handled by `routes/payment.js`
 
 <a id="differentiators"></a>
 ## ⭐ Differentiators
@@ -85,13 +87,17 @@ Key routes (based on `app.js`):
 | Session storage (MongoDB) | Current | `connect-mongo` |
 | Flash messages & error handling | Current | Centralized Express error middleware |
 | Cloud image uploads | Current | Multer + Cloudinary (optional) |
+| Stripe payments | Current | Multi-method checkout (card, Affirm, Clearpay, WeChat Pay, Cash App) |
+| Booking reservations | Current | Date-based booking with overlap detection |
+| Multi-currency support | Current | Automatic USD conversion with real-time exchange rates |
+| Email confirmations | Current | Resend integration for booking confirmations & receipts |
 
 ### Extended / Optional
 
 | Feature | Status | Notes |
 |---------|:------:|-------|
 | Docker support | Example | Sample Dockerfile included |
-| Payments | Future | Stripe / PayPal integration planned |
+| Payments | Current | Stripe checkout with multi-currency support & email confirmations |
 | Favorites / Wishlists | Future | User personalization |
 | Reviews & Ratings enhancements | Future | Owner / renter feedback workflow |
 
@@ -111,6 +117,19 @@ Update (PUT/PATCH) is permitted only if all conditions hold:
   3. (Optional) Prevent user from reviewing own listing.
 - Delete review allowed only for its author (and optionally admins).
 
+### Payment & booking
+
+- **Stripe integration**: Supports multi-method payments (card, Affirm, Clearpay, WeChat Pay, Cash App).
+- **Checkout flow**:
+  1. User selects listing and booking dates (check-in/check-out).
+  2. Date overlap validation prevents double-booking.
+  3. Automatic currency conversion to USD for Stripe processing.
+  4. Secure checkout session creation with success/cancel URLs.
+- **Multi-currency support**: Accepts bookings in any currency; real-time USD conversion via exchange rate API.
+- **Booking confirmations**: Automated emails sent via Resend on successful payment.
+- **Payment tracking**: All transactions logged in `PaymentRecord` with status, customer details, and booking info.
+- **Ownership guard**: Users cannot pay for their own listings.
+
 <a id="tech-stack"></a>
 ## 🧰 Tech stack
 
@@ -119,6 +138,8 @@ Update (PUT/PATCH) is permitted only if all conditions hold:
 - EJS + ejs-mate
 - MongoDB + Mongoose
 - Passport.js + passport-local-mongoose
+- Stripe for payment processing
+- Resend for transactional emails
 - Joi for validation
 - Cloudinary + multer-storage-cloudinary for image uploads
 
@@ -177,6 +198,8 @@ CLOUD_NAME=...
 CLOUD_API_KEY=...
 CLOUD_API_SECRET=...
 MAP_TOKEN=... # optional
+STRIPE_SECRET_KEY=sk_live_... # Stripe payment key
+RESEND_API_KEY=... # Resend email service key
 ```
 
 
@@ -298,6 +321,31 @@ MongoDB collections and representative document shapes.
 
 ### Default image logic
 If no upload provided, set image.url to a constant (e.g. /images/default-listing.jpg) and image.filename to null.
+
+### Payment records collection
+```json
+{
+  "_id": "ObjectId",
+  "sessionId": "string (unique)",          // Stripe checkout session ID
+  "paymentIntentId": "string",             // Stripe payment intent ID
+  "amountTotal": 9999,                     // Total in cents
+  "currency": "USD",                       // Charged currency
+  "localCurrency": "GBP",                  // User's booking currency
+  "localAmountTotal": 7800,                // Amount in local currency
+  "paymentStatus": "paid",                 // Stripe payment status
+  "status": "paid",                        // Transaction status
+  "customerEmail": "string",               // Buyer email
+  "customerName": "string",                // Buyer name
+  "userId": "ObjectId -> users._id",       // Buyer reference
+  "listingId": "ObjectId -> listings._id", // Property booked
+  "bookingStartDate": "Date",              // Check-in date
+  "bookingEndDate": "Date",                // Check-out date
+  "bookingDays": 3,                        // Number of days (inclusive)
+  "paymentMethodTypes": ["card"],          // Payment method used
+  "createdAt": "Date",
+  "updatedAt": "Date"
+}
+```
 
 <a id="contributing"></a>
 ## 🤝 Contributing
