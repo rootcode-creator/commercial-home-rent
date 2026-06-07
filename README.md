@@ -91,6 +91,7 @@ Key routes (based on `app.js`):
 | Booking reservations | Current | Date-based booking with overlap detection |
 | Multi-currency support | Current | Automatic USD conversion with real-time exchange rates |
 | Email confirmations | Current | Resend integration for booking confirmations & receipts |
+| Repeat booking download | Current | Download previous bookings & receipts as records |
 
 ### Extended / Optional
 
@@ -226,33 +227,53 @@ Review fields:
 - `review.rating` (number 1..5)
 - `review.comment` (string)
 
-Mermaid flow (updated: default image used when none uploaded):
+Mermaid flow (updated: includes listings, reviews, payments, and booking management):
 
 ```mermaid
 flowchart TD
     A[Client] --> B[Login or Signup]
     B --> C[Auth OK]
-    C --> D[POST /listings]
-    D --> E[Parse body]
-    E --> F[Validate Joi]
-    F --> I{Image provided?}
-    I -->|Yes| J[Upload image]
-    J --> K[Attach uploaded image refs]
-    I -->|No| L[Use default image placeholder]
-    K --> M[Listing created]
-    L --> M
-    M --> N[PUT /listings/:id]
-    N --> O[Check: exists?]
-    O --> P{Owner & Auth?}
-    P -->|No| Q[Reject 403 / redirect]
-    P -->|Yes| R[Apply updates]
-    R --> S[Save changes]
-    M --> T[POST /listings/:id/reviews]
-    T --> U[Check: auth + not owner]
-    U --> V[Validate review]
-    V --> W[Save review]
-    W --> X[Respond]
-    S --> X[Respond]
+    C --> D{User Action}
+    D -->|Create Listing| E[POST /listings]
+    D -->|View Listing| F[GET /listings/:id]
+    D -->|Book Property| G[POST /cart/create-checkout-session]
+    D -->|View Bookings| H[GET /bookings]
+    E --> E1[Parse body]
+    E1 --> E2[Validate Joi]
+    E2 --> E3{Image provided?}
+    E3 -->|Yes| E4[Upload image to Cloudinary]
+    E4 --> E5[Attach image refs]
+    E3 -->|No| E6[Use default placeholder]
+    E5 --> E7[Listing created]
+    E6 --> E7
+    F --> F1[Fetch listing details]
+    F1 --> F2{Owner?}
+    F2 -->|Yes| F3[Show edit/delete options]
+    F2 -->|No| F4[Show booking option]
+    F3 --> F5[PUT /listings/:id or DELETE]
+    F4 --> G
+    G --> G1[Check booking dates]
+    G1 --> G2{Dates overlap?}
+    G2 -->|Yes| G3[Reject - dates unavailable]
+    G2 -->|No| G4[Validate products & currency]
+    G4 --> G5[Convert to USD]
+    G5 --> G6[Create Stripe checkout session]
+    G6 --> G7[Redirect to Stripe payment]
+    G7 --> G8{Payment success?}
+    G8 -->|Yes| G9[Create PaymentRecord]
+    G9 --> G10[Send booking confirmation email]
+    G10 --> G11[Redirect to success page]
+    G8 -->|No| G12[Redirect to cancel page]
+    H --> H1[Fetch PaymentRecords for user]
+    H1 --> H2[Display booking history]
+    H2 --> H3{Download receipt?}
+    H3 -->|Yes| H4[Generate & download receipt]
+    H3 -->|No| H5[View booking details]
+    E7 --> I[POST /listings/:id/reviews]
+    I --> I1[Check: auth + not owner]
+    I1 --> I2[Validate review Joi]
+    I2 --> I3[Save review]
+    I3 --> I4[Respond]
 ```
 
 <a id="json-metadata-example"></a>
