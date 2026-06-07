@@ -229,6 +229,8 @@ Review fields:
 
 Mermaid flow (updated: includes listings, reviews, payments, and booking management):
 
+> **💡 Tip:** If the diagram extends beyond your screen width, **use your mouse scroll** (or arrow keys) to navigate horizontally. You can also click and drag to pan the diagram in some viewers.
+
 ```mermaid
 flowchart TD
     A[Client] --> B[Login or Signup]
