@@ -102,6 +102,98 @@ Key routes (based on `app.js`):
 | Favorites / Wishlists | Future | User personalization |
 | Reviews & Ratings enhancements | Future | Owner / renter feedback workflow |
 
+### Format selection & upload syntax
+
+<a id="format-selection--upload-syntax"></a>
+
+- `schema.js` defines the expected request payload shapes for listings and reviews.
+- `cloudConfig.js` contains Cloudinary params; the source includes a probable typo `allowerdFormats` — correct to `allowedFormats` if you depend on that option. [VERIFY]
+
+Listing Joi validation fields:
+
+- `listing.title` (string, required)
+- `listing.description` (string, required)
+- `listing.location` (string, required)
+- `listing.country` (string, required)
+- `listing.price` (number >= 0, required)
+- `listing.image` (string | null)
+
+Review fields:
+
+- `review.rating` (number 1..5)
+- `review.comment` (string)
+
+Mermaid flow (updated: includes listings, reviews, payments, and booking management):
+
+> **💡 Tip:** If the diagram extends beyond your screen width, **use your mouse scroll or arrow keys** to navigate horizontally. Mouse drag may also work depending on your viewer.
+>
+> **Interactive view:** If dragging isn't available in this viewer, open the diagram interactively to pan and zoom:
+>
+> - Open `https://mermaid.live`
+> - Paste the Mermaid block below into the editor
+> - Use click-and-drag to pan and mouse scroll to zoom (or use on-screen controls)
+>
+> **If scrolling or dragging still don't work, try:**
+>
+> - Hold `Shift` and use the mouse wheel to scroll horizontally in most desktop browsers.
+> - On touchpads: swipe two fingers horizontally to pan.
+> - Use the left/right arrow keys when the diagram has focus.
+> - Export the diagram to an SVG using the Mermaid CLI and open it in a browser that supports pan/zoom:
+>
+> ```bash
+> npx -p @mermaid-js/mermaid-cli mmdc -i diagram.mmd -o diagram.svg
+> ```
+>
+> - Or open `https://mermaid.live` and paste the block; the live editor provides pan/zoom controls and export options.
+>
+> Alternatively, paste the diagram into any Mermaid renderer/editor that supports pan/zoom.
+
+```mermaid
+flowchart TD
+  A[Client] --> B[Login or Signup]
+  B --> C[Auth OK]
+  C --> D{User Action}
+  D -->|Create Listing| E[POST /listings]
+  D -->|View Listing| F[GET /listings/:id]
+  D -->|Book Property| G[POST /cart/create-checkout-session]
+  D -->|View Bookings| H[GET /bookings]
+  E --> E1[Parse body]
+  E1 --> E2[Validate Joi]
+  E2 --> E3{Image provided?}
+  E3 -->|Yes| E4[Upload image to Cloudinary]
+  E4 --> E5[Attach image refs]
+  E3 -->|No| E6[Use default placeholder]
+  E5 --> E7[Listing created]
+  E6 --> E7
+  F --> F1[Fetch listing details]
+  F1 --> F2{Owner?}
+  F2 -->|Yes| F3[Show edit/delete options]
+  F2 -->|No| F4[Show booking option]
+  F3 --> F5[PUT /listings/:id or DELETE]
+  F4 --> G
+  G --> G1[Check booking dates]
+  G1 --> G2{Dates overlap?}
+  G2 -->|Yes| G3[Reject - dates unavailable]
+  G2 -->|No| G4[Validate products & currency]
+  G4 --> G5[Convert to USD]
+  G5 --> G6[Create Stripe checkout session]
+  G6 --> G7[Redirect to Stripe payment]
+  G7 --> G8{Payment success?}
+  G8 -->|Yes| G9[Create PaymentRecord]
+  G9 --> G10[Send booking confirmation email]
+  G10 --> G11[Redirect to success page]
+  G8 -->|No| G12[Redirect to cancel page]
+  H --> H1[Fetch PaymentRecords for user]
+  H1 --> H2[Display booking history]
+  H2 --> H3{Download receipt?}
+  H3 -->|Yes| H4[Generate & download receipt]
+  H3 -->|No| H5[View booking details]
+  E7 --> I[POST /listings/:id/reviews]
+  I --> I1[Check: auth + not owner]
+  I1 --> I2[Validate review Joi]
+  I2 --> I3[Save review]
+  I3 --> I4[Respond]
+```
 ### Listing update authorization
 
 Update (PUT/PATCH) is permitted only if all conditions hold:
@@ -207,97 +299,6 @@ RESEND_API_KEY=... # Resend email service key
 
 Note: `app.js` loads `.env` automatically when NODE_ENV != "production".
 
-<a id="format-selection--upload-syntax"></a>
-## 🗂 Format selection & upload syntax
-
-- `schema.js` defines the expected request payload shapes for listings and reviews.
-- `cloudConfig.js` contains Cloudinary params; the source includes a probable typo `allowerdFormats` — correct to `allowedFormats` if you depend on that option. [VERIFY]
-
-Listing Joi validation fields:
-
-- `listing.title` (string, required)
-- `listing.description` (string, required)
-- `listing.location` (string, required)
-- `listing.country` (string, required)
-- `listing.price` (number >= 0, required)
-- `listing.image` (string | null)
-
-Review fields:
-
-- `review.rating` (number 1..5)
-- `review.comment` (string)
-
-Mermaid flow (updated: includes listings, reviews, payments, and booking management):
-
-> **💡 Tip:** If the diagram extends beyond your screen width, **use your mouse scroll or arrow keys** to navigate horizontally. Mouse drag may also work depending on your viewer.
->
-> **Interactive view:** If dragging isn't available in this viewer, open the diagram interactively to pan and zoom:
->
-> - Open `https://mermaid.live`
-> - Paste the Mermaid block below into the editor
-> - Use click-and-drag to pan and mouse scroll to zoom (or use on-screen controls)
->
-> **If scrolling or dragging still don't work, try:**
->
-> - Hold `Shift` and use the mouse wheel to scroll horizontally in most desktop browsers.
-> - On touchpads: swipe two fingers horizontally to pan.
-> - Use the left/right arrow keys when the diagram has focus.
-> - Export the diagram to an SVG using the Mermaid CLI and open it in a browser that supports pan/zoom:
->
-> ```bash
-> npx -p @mermaid-js/mermaid-cli mmdc -i diagram.mmd -o diagram.svg
-> ```
->
-> - Or open `https://mermaid.live` and paste the block; the live editor provides pan/zoom controls and export options.
->
-> Alternatively, paste the diagram into any Mermaid renderer/editor that supports pan/zoom.
-
-```mermaid
-flowchart TD
-    A[Client] --> B[Login or Signup]
-    B --> C[Auth OK]
-    C --> D{User Action}
-    D -->|Create Listing| E[POST /listings]
-    D -->|View Listing| F[GET /listings/:id]
-    D -->|Book Property| G[POST /cart/create-checkout-session]
-    D -->|View Bookings| H[GET /bookings]
-    E --> E1[Parse body]
-    E1 --> E2[Validate Joi]
-    E2 --> E3{Image provided?}
-    E3 -->|Yes| E4[Upload image to Cloudinary]
-    E4 --> E5[Attach image refs]
-    E3 -->|No| E6[Use default placeholder]
-    E5 --> E7[Listing created]
-    E6 --> E7
-    F --> F1[Fetch listing details]
-    F1 --> F2{Owner?}
-    F2 -->|Yes| F3[Show edit/delete options]
-    F2 -->|No| F4[Show booking option]
-    F3 --> F5[PUT /listings/:id or DELETE]
-    F4 --> G
-    G --> G1[Check booking dates]
-    G1 --> G2{Dates overlap?}
-    G2 -->|Yes| G3[Reject - dates unavailable]
-    G2 -->|No| G4[Validate products & currency]
-    G4 --> G5[Convert to USD]
-    G5 --> G6[Create Stripe checkout session]
-    G6 --> G7[Redirect to Stripe payment]
-    G7 --> G8{Payment success?}
-    G8 -->|Yes| G9[Create PaymentRecord]
-    G9 --> G10[Send booking confirmation email]
-    G10 --> G11[Redirect to success page]
-    G8 -->|No| G12[Redirect to cancel page]
-    H --> H1[Fetch PaymentRecords for user]
-    H1 --> H2[Display booking history]
-    H2 --> H3{Download receipt?}
-    H3 -->|Yes| H4[Generate & download receipt]
-    H3 -->|No| H5[View booking details]
-    E7 --> I[POST /listings/:id/reviews]
-    I --> I1[Check: auth + not owner]
-    I1 --> I2[Validate review Joi]
-    I2 --> I3[Save review]
-    I3 --> I4[Respond]
-```
 
 <a id="json-metadata-example"></a>
 ## 🗄️Database structure
