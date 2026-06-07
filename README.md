@@ -230,9 +230,16 @@ Review fields:
 Mermaid flow (updated: includes listings, reviews, payments, and booking management):
 
 > **💡 Tip:** If the diagram extends beyond your screen width, **use your mouse scroll or arrow keys** to navigate horizontally. Mouse drag may also work depending on your viewer.
+>
+> **Interactive view:** If dragging isn't available in this viewer, open the diagram interactively to pan and zoom:
+>
+> - Open `https://mermaid.live`
+> - Paste the Mermaid block below into the editor
+> - Use click-and-drag to pan and mouse scroll to zoom (or use on-screen controls)
+>
+> Alternatively, paste the diagram into any Mermaid renderer/editor that supports pan/zoom.
 
 ```mermaid
-%%{init: {'flowchart': {'useMaxWidth': false}}}%%
 flowchart TD
     A[Client] --> B[Login or Signup]
     B --> C[Auth OK]
