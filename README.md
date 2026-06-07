@@ -237,6 +237,19 @@ Mermaid flow (updated: includes listings, reviews, payments, and booking managem
 > - Paste the Mermaid block below into the editor
 > - Use click-and-drag to pan and mouse scroll to zoom (or use on-screen controls)
 >
+> **If scrolling or dragging still don't work, try:**
+>
+> - Hold `Shift` and use the mouse wheel to scroll horizontally in most desktop browsers.
+> - On touchpads: swipe two fingers horizontally to pan.
+> - Use the left/right arrow keys when the diagram has focus.
+> - Export the diagram to an SVG using the Mermaid CLI and open it in a browser that supports pan/zoom:
+>
+> ```bash
+> npx -p @mermaid-js/mermaid-cli mmdc -i diagram.mmd -o diagram.svg
+> ```
+>
+> - Or open `https://mermaid.live` and paste the block; the live editor provides pan/zoom controls and export options.
+>
 > Alternatively, paste the diagram into any Mermaid renderer/editor that supports pan/zoom.
 
 ```mermaid
