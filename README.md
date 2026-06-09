@@ -1,5 +1,17 @@
 <div align="center">
 
+<svg xmlns="http://www.w3.org/2000/svg" width="160" height="80" viewBox="0 0 160 80" role="img" aria-label="Duplex icon" style="margin-bottom:12px">
+  <g fill="none" stroke="#0F172A" stroke-width="2" stroke-linejoin="round" stroke-linecap="round">
+    <g transform="translate(6,6)">
+      <path d="M10 30 L30 14 L50 30 V54 H10z" fill="#FECACA" stroke="none"/>
+      <path d="M50 30 L70 14 L90 30 V54 H50z" fill="#FEE2E2" stroke="none"/>
+      <rect x="18" y="36" width="12" height="12" fill="#0F172A" />
+      <rect x="58" y="36" width="12" height="12" fill="#0F172A" />
+      <path d="M0 54 H100" stroke="#0F172A" stroke-width="2"/>
+    </g>
+  </g>
+</svg>
+
 ## commercial-home-rent
 
 Property listing and rental platform powered by Express.js, MongoDB, EJS, Passport, and Cloudinary.
