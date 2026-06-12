@@ -87,7 +87,7 @@ app.engine('ejs', ejsMate);
 app.use(express.static(path.join(__dirname, "/public")));
 app.get("/favicon.ico", (req, res) => {
   res.type("image/png");
-  return res.sendFile(path.join(__dirname, "public", "images", "rent.png"));
+  return res.sendFile(path.join(__dirname, "public", "images", "favicon.png"));
 });
 
 if (isServerlessRuntime || process.env.NODE_ENV === "production") {
