@@ -489,7 +489,7 @@ module.exports.index = async (req, res) => {
     }
   }
 
-  const pageTitle = 'Wanderlust — Vacation rentals, cabins, and more';
+  const pageTitle = 'Snowflakes — Vacation rentals, cabins, and more';
   return res.render("listings/index.ejs", {
     allListings,
     searchQuery,
@@ -731,7 +731,7 @@ module.exports.showListing = async (req, res) => {
       amenityCategories = await AmenityCategory.find().sort({ order: 1, name: 1 }).lean();
     }
 
-  const pageTitle = listing && listing.title ? `${listing.title} — Wanderlust` : 'Wanderlust';
+  const pageTitle = listing && listing.title ? `${listing.title} — Snowflakes` : 'Snowflakes';
     return res.render("listings/show.ejs", {
       listing,
       hostAggregatedStats,
