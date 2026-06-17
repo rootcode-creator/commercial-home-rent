@@ -505,6 +505,7 @@ module.exports.index = async (req, res) => {
 module.exports.myListings = async (req, res) => {
   const ownedListings = await Listing.find({ owner: req.user._id }).select("title price location status").lean();
   const ownedIds = ownedListings.map((listing) => String(listing._id));
+  const ownedListingsById = new Map(ownedListings.map((listing) => [String(listing._id), listing]));
   const existing = await MyListing.find({ listingId: { $in: ownedIds } }).select("listingId").lean();
   const existingIds = new Set(existing.map((item) => String(item.listingId)));
 
@@ -581,7 +582,7 @@ module.exports.myListings = async (req, res) => {
     );
   }
 
-  const allListings = await MyListing.find({ userId: req.user._id })
+  const allListings = await MyListing.find({ userId: req.user._id, listingId: { $in: ownedIds } })
     .sort({ createdAt: -1 })
     .lean();
   let bookingRanges = new Map();
@@ -623,14 +624,25 @@ module.exports.myListings = async (req, res) => {
     });
   }
 
-  const listingsWithBooking = allListings.map((listing) => {
-    const listingId = String(listing.listingId || "");
-    const range = bookingRanges.get(listingId);
-    return {
-      ...listing,
-      bookingRange: range || null,
-    };
-  });
+  const listingsWithBooking = allListings
+    .map((listing) => {
+      const liveListing = ownedListingsById.get(String(listing.listingId));
+      if (!liveListing) {
+        return null;
+      }
+
+      const listingId = String(listing.listingId || "");
+      const range = bookingRanges.get(listingId);
+      return {
+        ...listing,
+        listingName: liveListing.title || listing.listingName,
+        price: liveListing.price ?? listing.price,
+        location: liveListing.location || listing.location,
+        status: liveListing.status || listing.status || "active",
+        bookingRange: range || null,
+      };
+    })
+    .filter(Boolean);
 
   return res.render("listings/mylistings.ejs", { allListings: listingsWithBooking });
 };
