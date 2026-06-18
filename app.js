@@ -17,6 +17,7 @@ const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
 const { isLoggedIn } = require("./middleware.js");
+const { getFriendlyDbErrorMessage } = require("./utils/errorMessages.js");
 const { startDailyExchangeRateRefresh } = require("./utils/exchangeRates.js");
 const { handleStripeWebhook } = require("./controllers/webhook.js");
 const port = process.env.PORT || 8080;
@@ -216,6 +217,10 @@ app.use( (err, req, res, next) => {
   if (res.headersSent) {
     console.error(err);
     return;
+  }
+  const friendlyDbMessage = getFriendlyDbErrorMessage(err);
+  if (friendlyDbMessage) {
+    return res.status(503).send(friendlyDbMessage);
   }
   let {statusCode = 500, message = "Something went wrong!" } = err;
   return res.status(statusCode).send(message);

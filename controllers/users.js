@@ -1,4 +1,5 @@
 const User = require("../models/user");
+const { getFriendlyDbErrorMessage } = require("../utils/errorMessages");
 
 //testing
 module.exports.root = (req, res) => {
@@ -39,6 +40,12 @@ module.exports.signup = async (req, res, next) => {
             return res.redirect("/listings");
         });
     } catch (e) {
+        const friendlyMessage = getFriendlyDbErrorMessage(e);
+        if (friendlyMessage) {
+            req.flash("error", friendlyMessage);
+            return res.redirect("/signup");
+        }
+
         // Handle duplicate key (race condition) with friendlier message
         if (e && e.code === 11000 && e.keyValue && e.keyValue.email) {
             req.flash('error', 'Email is already registered. Please login or use another email.');
