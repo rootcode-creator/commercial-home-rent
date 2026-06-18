@@ -1004,18 +1004,18 @@ module.exports.updateAmenities = async (req, res) => {
 
 module.exports.destroyListing = async (req, res) => {
   let { id } = req.params;
-  const listing = await Listing.findByIdAndUpdate(id, { status: "inactive" }, { new: true });
+  const listing = await Listing.findOneAndDelete({ _id: id });
   if (!listing) {
     req.flash("error", "Listing you requested does not exist!");
     return res.redirect("/listings");
   }
 
-  await MyListing.findOneAndUpdate(
-    { listingId: listing._id },
-    { $set: { status: "inactive" } }
-  );
+  await Promise.all([
+    MyListing.deleteOne({ listingId: listing._id }),
+    PaymentRecord.deleteMany({ listingId: String(listing._id) }),
+  ]);
 
-  req.flash("success", "Listing marked as inactive.");
+  req.flash("success", "Listing deleted along with its reservations.");
   return res.redirect("/listings/mylistings");
 };
 
