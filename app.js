@@ -39,22 +39,25 @@ const isServerlessRuntime =
   !!process.env.AWS_LAMBDA_FUNCTION_NAME;
 const useMongoSessionStore =
   process.env.USE_MONGO_SESSION === "true" && !!dbUrl;
+let dbConnectPromise = null;
 
-main()
-  .then(() => {
-    // Connected to database
-    startDailyExchangeRateRefresh();
-  })
-  .catch((err) => {
-    console.error("Database connection error:", err.message);
-    process.exit(1);
-  });
+if (dbUrl) {
+  dbConnectPromise = main()
+    .then(() => {
+      // Connected to database
+      startDailyExchangeRateRefresh();
+    })
+    .catch((err) => {
+      console.error("Database connection error:", err.message);
+      if (!isServerlessRuntime) {
+        process.exit(1);
+      }
+    });
+} else {
+  console.warn("ATLASDB_URL is not set; skipping database connection on startup.");
+}
 
 async function main() {
-  if (!dbUrl) {
-    throw new Error("Missing ATLASDB_URL environment variable");
-  }
-  
   await mongoose.connect(dbUrl, {
     serverSelectionTimeoutMS: 5000,
     connectTimeoutMS: 10000,
@@ -121,6 +124,20 @@ app.use((req, res, next) => {
   };
 
   next();
+});
+
+app.use(async (req, res, next) => {
+  if (!dbConnectPromise) {
+    return next();
+  }
+
+  try {
+    await dbConnectPromise;
+  } catch (err) {
+    return next(err);
+  }
+
+  return next();
 });
 
 
