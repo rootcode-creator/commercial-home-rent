@@ -21,7 +21,6 @@ Property listing and rental platform powered by Express.js, MongoDB, EJS, Passpo
 
 </div>
 
-Modern, compact README tailored to the Express + EJS property-listing code in this repository. Items marked [VERIFY] come from the source and should be confirmed before production use.
 
 ## Table of Contents
 
