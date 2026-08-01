@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="public/images/duplex.svg" alt="Duplex logo" width="160" style="margin-bottom:12px;" />
+<img src="house.png" alt="House logo" width="110" style="margin-bottom:12px;" />
 
 ## commercial-home-rent
 
@@ -81,27 +81,27 @@ Key routes (based on `app.js`):
 
 | Feature | Status | Notes |
 |---------|:------:|-------|
-| User registration & login | Current | Passport Local (session-based auth) |
-| Listings CRUD | Current | Create, read, update, delete listings |
-| Listing update ownership guard | Current | Update only if: listing exists, user authenticated, user is owner |
-| Reviews (create/delete) | Current | Authenticated users can add/remove their reviews |
-| Session storage (MongoDB) | Current | `connect-mongo` |
-| Flash messages & error handling | Current | Centralized Express error middleware |
-| Cloud image uploads | Current | Multer + Cloudinary (optional) |
-| Stripe payments | Current | Multi-method checkout (card, Affirm, Clearpay, WeChat Pay, Cash App) |
-| Booking reservations | Current | Date-based booking with overlap detection |
-| Multi-currency support | Current | Automatic USD conversion with real-time exchange rates |
-| Email confirmations | Current | Resend integration for booking confirmations & receipts |
-| Repeat booking download | Current | Download previous bookings & receipts as records |
+| User registration & login | ✅ Current | Passport Local (session-based auth) |
+| Listings CRUD | ✅ Current | Create, read, update, delete listings |
+| Listing update ownership guard | ✅ Current | Update only if: listing exists, user authenticated, user is owner |
+| Reviews (create/delete) | ✅ Current | Authenticated users can add/remove their reviews |
+| Session storage (MongoDB) | ✅ Current | `connect-mongo` |
+| Flash messages & error handling | ✅ Current | Centralized Express error middleware |
+| Cloud image uploads | ✅ Current | Multer + Cloudinary (optional) |
+| Stripe payments | ✅ Current | Multi-method checkout (card, Affirm, Clearpay, WeChat Pay, Cash App) |
+| Booking reservations | ✅ Current | Date-based booking with overlap detection |
+| Multi-currency support | ✅ Current | Automatic USD conversion with real-time exchange rates |
+| Email confirmations | ✅ Current | Resend integration for booking confirmations & receipts |
+| Repeat booking download | ✅ Current | Download previous bookings & receipts as records |
 
 ### Extended / Optional
 
 | Feature | Status | Notes |
 |---------|:------:|-------|
-| Docker support | Example | Sample Dockerfile included |
-| Payments | Current | Stripe checkout with multi-currency support & email confirmations |
-| Favorites / Wishlists | Future | User personalization |
-| Reviews & Ratings enhancements | Future | Owner / renter feedback workflow |
+| Docker support | 🧪 Example | Sample Dockerfile included |
+| Payments | ✅ Current | Stripe checkout with multi-currency support & email confirmations |
+| Favorites / Wishlists | ⏳ Future | User personalization |
+| Reviews & Ratings enhancements | ⏳ Future | Owner / renter feedback workflow |
 
 ### Format selection & upload syntax
 
@@ -126,28 +126,9 @@ Review fields:
 
 Mermaid flow (updated: includes listings, reviews, payments, and booking management):
 
-> **💡 Tip:** If the diagram extends beyond your screen width, **use your mouse scroll or arrow keys** to navigate horizontally. Mouse drag may also work depending on your viewer.
+> **💡 Tip:** For wide diagrams, use your mouse wheel or arrow keys to pan horizontally.
 >
-> **Interactive view:** If dragging isn't available in this viewer, open the diagram interactively to pan and zoom:
->
-> - Open `https://mermaid.live`
-> - Paste the Mermaid block below into the editor
-> - Use click-and-drag to pan and mouse scroll to zoom (or use on-screen controls)
->
-> **If scrolling or dragging still don't work, try:**
->
-> - Hold `Shift` and use the mouse wheel to scroll horizontally in most desktop browsers.
-> - On touchpads: swipe two fingers horizontally to pan.
-> - Use the left/right arrow keys when the diagram has focus.
-> - Export the diagram to an SVG using the Mermaid CLI and open it in a browser that supports pan/zoom:
->
-> ```bash
-> npx -p @mermaid-js/mermaid-cli mmdc -i diagram.mmd -o diagram.svg
-> ```
->
-> - Or open `https://mermaid.live` and paste the block; the live editor provides pan/zoom controls and export options.
->
-> Alternatively, paste the diagram into any Mermaid renderer/editor that supports pan/zoom.
+> If your viewer does not support dragging, open the diagram in `https://mermaid.live` for better zoom and navigation controls.
 
 ```mermaid
 flowchart TD
@@ -227,15 +208,16 @@ Update (PUT/PATCH) is permitted only if all conditions hold:
 <a id="tech-stack"></a>
 ## 🧰 Tech stack
 
-- Node.js (see `package.json`. `engines` field contains Node 23.5.0 — prefer an LTS version in production) [VERIFY]
-- Express
-- EJS + ejs-mate
-- MongoDB + Mongoose
-- Passport.js + passport-local-mongoose
-- Stripe for payment processing
-- Resend for transactional emails
-- Joi for validation
-- Cloudinary + multer-storage-cloudinary for image uploads
+- **Runtime:** Node.js
+- **Framework:** Express.js
+- **Templates:** EJS + ejs-mate
+- **Database:** MongoDB + Mongoose
+- **Authentication:** Passport.js + passport-local-mongoose
+- **Payments:** Stripe
+- **Email:** Resend
+- **Validation:** Joi
+- **Media uploads:** Cloudinary + multer-storage-cloudinary
+- **Maps:** Mapbox
 
 <a id="install-methods"></a>
 ## ⚙️ Install methods
