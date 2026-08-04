@@ -124,6 +124,8 @@ Review fields:
 - `review.rating` (number 1..5)
 - `review.comment` (string)
 
+### 🌊 Flow diagram
+
 Mermaid flow (updated: includes listings, reviews, payments, and booking management):
 
 > **💡 Tip:** For wide diagrams, use your mouse wheel or arrow keys to pan horizontally.
