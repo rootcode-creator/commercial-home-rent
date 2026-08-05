@@ -487,17 +487,12 @@
         <div class="modal-body amenities-modal-body">
           <h2 class="amenities-modal-title" id="amenitiesModalLabel">What this place offers</h2>
           <% const catalogGroups = Array.isArray(typeof amenityCatalogData !== 'undefined' ? amenityCatalogData : []) ? (typeof amenityCatalogData !== 'undefined' ? amenityCatalogData : []) : [];
-             const selectedLabels = new Set(customAmenities.map((item) => String(item.label || '').trim().toLowerCase()).filter(Boolean));
+             const selectedLabels = new Set(offers.map((item) => String(item.label || '').trim().toLowerCase()).filter(Boolean));
              const groupedAmenities = catalogGroups.length > 0
                ? catalogGroups.map((group) => ({
                    title: group.name || group.title || 'Amenities',
                    items: Array.isArray(group.items)
-                     ? group.items.filter((item) => {
-                         if (customAmenities.length === 0) {
-                           return true;
-                         }
-                         return selectedLabels.has(String(item.label || '').trim().toLowerCase());
-                       })
+                     ? group.items.filter((item) => selectedLabels.has(String(item.label || '').trim().toLowerCase()))
                      : [],
                  })).filter((group) => group.items.length > 0)
                : [];
