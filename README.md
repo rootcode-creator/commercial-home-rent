@@ -26,7 +26,6 @@ Property listing and rental platform powered by Express.js, MongoDB, EJS, Passpo
 
 - **[Project intro](#project-intro)**
 - **[Project structure](#project-structure)**
-- **[Differentiators](#differentiators)**
 - **[Features](#features)**
 - **[Tech stack](#tech-stack)**
 - **[Install methods](#install-methods)**
@@ -41,6 +40,12 @@ Property listing and rental platform powered by Express.js, MongoDB, EJS, Passpo
 ## 🚀 Project intro
 
 `commercial-home-rent` is a compact Express application that implements listings, reviews, and user authentication. It is intended as a learning or MVP foundation for property listing and renting functionality. The application uses server-side templates (EJS) and stores data in MongoDB.
+
+### 🎬 Demonstration
+
+Watch the demo video for a complete walkthrough of the property listing, booking, payment, and review flows:
+
+https://www.youtube.com/watch?v=oaWh6L09oFA
 
 <a id="project-structure"></a>
 ## 📁 Project structure
@@ -65,14 +70,6 @@ Key routes (based on `app.js`):
 - `/listings/:id/reviews` — reviews handled by `routes/review.js`
 - `/cart` — cart & payment routes handled by `routes/cart.js`
 - `/payments` — payment utilities & email resend handled by `routes/payment.js`
-
-<a id="differentiators"></a>
-## ⭐ Differentiators
-
-- Clear MVC-like separation (models/controllers/routes) in a small codebase.
-- `passport-local-mongoose` simplifies user model and authentication.
-- Joi validation in `schema.js` provides central request validation.
-- Cloudinary integration for image storage (optional).
 
 <a id="features"></a>
 ## 🔧 Features
