@@ -19,6 +19,10 @@ const listingSchema = new Schema({
         },
     ],
     price: Number,
+    includeDefaultAmenities: {
+        type: Boolean,
+        default: true,
+    },
     category: {
         type: String,
         enum: [

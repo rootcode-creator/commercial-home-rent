@@ -79,7 +79,11 @@
                   label: item && item.label ? item.label : '',
                 })).filter((item) => item.label)
               : [];
-            const offers = customAmenities.length > 0 ? customAmenities : defaultOffers;
+            const includeDefaultAmenities = listing.includeDefaultAmenities !== false;
+            const mergedAmenities = includeDefaultAmenities
+              ? [...customAmenities, ...defaultOffers.filter((defaultItem) => !customAmenities.some((customItem) => String(customItem.label).trim().toLowerCase() === String(defaultItem.label).trim().toLowerCase()))]
+              : customAmenities;
+            const offers = mergedAmenities;
             const offersButtonLabel = 'Show all amenities'; %>
 
             <div class="offers-section mt-5">

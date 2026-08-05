@@ -1040,6 +1040,7 @@ module.exports.updateAmenities = async (req, res) => {
 
   const amenitiesInput = req.body?.amenities ?? req.body?.listing?.amenities;
   listing.amenities = parseAmenitiesInput(amenitiesInput);
+  listing.includeDefaultAmenities = req.body.includeDefaultAmenities !== undefined;
   await listing.save();
 
   req.flash("success", "Amenities updated!");

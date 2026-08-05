@@ -121,6 +121,11 @@
                                 <button type="submit" class="btn btn-dark">Save Amenities</button>
                             </div>
 
+                            <div class="form-check form-switch mt-3">
+                                <input class="form-check-input" type="checkbox" id="includeDefaultAmenities" name="includeDefaultAmenities" <%= listing.includeDefaultAmenities !== false ? 'checked' : '' %>>
+                                <label class="form-check-label" for="includeDefaultAmenities">Show default amenities as well</label>
+                            </div>
+
                             <input type="hidden" name="amenities" id="amenitiesPayload" value="[]">
 
                             <div class="mt-3">
