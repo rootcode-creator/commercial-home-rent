@@ -69,6 +69,7 @@ const getBookingRange = (record) => {
   };
 };
 
+const getAppOrigin = () => (process.env.BASEURL || process.env.APP_ORIGIN || process.env.EMAIL_URL || "").replace(/\/$/, "");
 const getEmailOrigin = () => (process.env.EMAIL_URL || process.env.BASEURL || process.env.APP_ORIGIN || "").replace(/\/$/, "");
 
 const parseHostname = (origin) => {
@@ -131,11 +132,11 @@ const buildBookingEmail = async (record) => {
   const subtotal = total; // no itemized breakdown available here
   const tax = "0.00";
   const paymentMethod = Array.isArray(record.paymentMethodTypes) && record.paymentMethodTypes.length > 0 ? record.paymentMethodTypes[0] : "card";
-  const appOrigin = getEmailOrigin();
+  const appOrigin = getAppOrigin();
   const bookingUrl = appOrigin ? `${appOrigin}/listings/reservations` : '/listings/reservations';
   const supportEmail =
     process.env.SUPPORT_EMAIL ||
-    `booking-confirmation@${appOrigin.replace(/^https?:\/\//, '')}`;
+    `booking-confirmation@${parseHostname(getEmailOrigin())}`;
   const logoUrl = process.env.LOGO_URL || "https://your-cdn.example/logo.png";
 
   const subject = `Booking confirmed: ${listingTitle}`;
@@ -174,7 +175,7 @@ const buildOwnerBookingEmail = async (record, ownerInfo = {}) => {
   const total = (Number(totalValue) || 0).toFixed(2);
   const reservedAt = record.reservationDate ? new Date(record.reservationDate).toLocaleString() : "";
   const bookingId = record.sessionId || record.paymentIntentId || "";
-  const appOrigin = getEmailOrigin();
+  const appOrigin = getAppOrigin();
   const ordersUrl = record.listingId
     ? appOrigin
       ? `${appOrigin}/listings/mylistings/${record.listingId}/orders`
@@ -184,7 +185,7 @@ const buildOwnerBookingEmail = async (record, ownerInfo = {}) => {
     : "/listings/mylistings";
   const supportEmail =
     process.env.SUPPORT_EMAIL ||
-    `booking-confirmation@${parseHostname(appOrigin)}`;
+    `booking-confirmation@${parseHostname(getEmailOrigin())}`;
   const logoUrl = process.env.LOGO_URL || "https://your-cdn.example/logo.png";
   const ownerName = ownerInfo.ownerName || "Host";
   const guestName = record.customerName || "Guest";
@@ -226,6 +227,7 @@ const buildCancellationEmail = async (record) => {
   const canceledAt = new Date().toLocaleString();
   const bookingId = record.sessionId || record.paymentIntentId || "";
   const appOrigin = getEmailOrigin();
+  const listingsUrl = appOrigin ? `${appOrigin}/listings` : "/listings";
   const supportEmail =
     process.env.SUPPORT_EMAIL ||
     `booking-cancel@${appOrigin.replace(/^https?:\/\//, '')}`;
@@ -248,6 +250,7 @@ const buildCancellationEmail = async (record) => {
     listingLocation: record.listingLocation || "",
     listingCountry: record.listingCountry || "",
     customerName: record.customerName || "",
+    listingsUrl,
   });
 
   const text = `Booking canceled: ${listingTitle} - Booking #${bookingId}\n\nHello ${record.customerName || 'Guest'},\n\nYour reservation has been canceled successfully.\n\nListing: ${listingTitle}\nLocation: ${record.listingLocation || ''}${record.listingCountry ? ', ' + record.listingCountry : ''}\nBooking dates: ${bookingStartText}${bookingEndText ? ' to ' + bookingEndText : ''}\nNights: ${bookingDays}\nCanceled at: ${canceledAt}\nTotal paid: ${currency} ${total}\n\nIf you have questions, contact ${supportEmail}.\n\nThanks,\nWanderlust Private Limited`;
