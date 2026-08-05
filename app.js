@@ -11,6 +11,9 @@ const path = require("path");
 const ejsMate = require("ejs-mate");
 const ExpressError = require("./utils/ExpressError.js");
 const session = require("express-session");
+
+const appOrigin = (process.env.BASEURL || process.env.APP_ORIGIN || "").replace(/\/$/, "");
+app.locals.APP_ORIGIN = appOrigin;
 const MongoStore = require('connect-mongo');
 const flash = require("connect-flash");
 const passport = require("passport");
@@ -101,6 +104,7 @@ if (isServerlessRuntime || process.env.NODE_ENV === "production") {
 }
 
 app.use((req, res, next) => {
+  res.locals.APP_ORIGIN = app.locals.APP_ORIGIN;
   const originalSend = res.send.bind(res);
   const originalRender = res.render.bind(res);
   const originalRedirect = res.redirect.bind(res);

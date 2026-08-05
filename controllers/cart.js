@@ -106,7 +106,7 @@ module.exports.createCheckoutSession = async (req, res) => {
   const gst = gstEnabled ? subtotal * 0.18 : 0;
   const total = subtotal + gst;
 
-  const origin = `${req.protocol}://${req.get("host")}`;
+  const origin = (process.env.BASEURL || process.env.APP_ORIGIN || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
 
   const session = await stripe.checkout.sessions.create({
     mode: "payment",

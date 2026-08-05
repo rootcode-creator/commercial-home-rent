@@ -815,8 +815,8 @@ module.exports.renderReceipt = async (req, res) => {
     return res.redirect('/listings/reservations');
   }
 
-  const host = req.get('host');
-  return res.render('listings/receipt.ejs', { record, listing, host });
+  const appOrigin = (process.env.BASEURL || process.env.APP_ORIGIN || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+  return res.render('listings/receipt.ejs', { record, listing, host: appOrigin });
 };
 
 
@@ -845,8 +845,8 @@ module.exports.generateReceiptPdf = async (req, res) => {
     return res.redirect('/listings/reservations');
   }
 
-  const host = req.get('host');
-  const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId, host });
+  const appOrigin = (process.env.BASEURL || process.env.APP_ORIGIN || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
+  const fallbackPath = await buildReceiptPdfFallback({ record, listing, sessionId, host: appOrigin });
   const streamed = await streamPdfFile(res, fallbackPath, sessionId);
   if (streamed) {
     return;

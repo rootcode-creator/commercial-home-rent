@@ -69,6 +69,8 @@ const getBookingRange = (record) => {
   };
 };
 
+const getAppOrigin = () => (process.env.BASEURL || process.env.APP_ORIGIN || "").replace(/\/$/, "");
+
 const buildBookingEmail = async (record) => {
   const listingTitle = record.listingTitle || "Booked listing";
   const { bookingDays, bookingStartText, bookingEndText } = getBookingRange(record);
@@ -80,11 +82,11 @@ const buildBookingEmail = async (record) => {
   const subtotal = total; // no itemized breakdown available here
   const tax = "0.00";
   const paymentMethod = Array.isArray(record.paymentMethodTypes) && record.paymentMethodTypes.length > 0 ? record.paymentMethodTypes[0] : "card";
-  const appOrigin = (process.env.BASEURL || process.env.APP_ORIGIN || "https://home-rent.kawserahmed.tech").replace(/\/$/, "");
-  const bookingUrl = `${appOrigin}/listings/reservations`;
+  const appOrigin = getAppOrigin();
+  const bookingUrl = appOrigin ? `${appOrigin}/listings/reservations` : '/listings/reservations';
   const supportEmail =
     process.env.SUPPORT_EMAIL ||
-    "booking-confirmation@wanderlust.kawserahmed.tech";
+    `booking-confirmation@${appOrigin.replace(/^https?:\/\//, '')}`;
   const logoUrl = process.env.LOGO_URL || "https://your-cdn.example/logo.png";
 
   const subject = `Booking confirmed: ${listingTitle}`;
@@ -123,9 +125,10 @@ const buildCancellationEmail = async (record) => {
   const total = (Number(totalValue) || 0).toFixed(2);
   const canceledAt = new Date().toLocaleString();
   const bookingId = record.sessionId || record.paymentIntentId || "";
+  const appOrigin = getAppOrigin();
   const supportEmail =
     process.env.SUPPORT_EMAIL ||
-    "booking-cancel@wanderlust.kawserahmed.tech";
+    `booking-cancel@${appOrigin.replace(/^https?:\/\//, '')}`;
   const logoUrl = process.env.LOGO_URL || "https://your-cdn.example/logo.png";
 
   const subject = `Booking canceled: ${listingTitle}`;
@@ -167,9 +170,10 @@ const sendBookingEmail = async (record, force = false) => {
     return;
   }
 
+  const appOrigin = getAppOrigin();
   const from =
     process.env.RESEND_FROM_EMAIL ||
-    "Wanderlust Private Limited <booking-confirmation@wanderlust.kawserahmed.tech>";
+    `Wanderlust Private Limited <booking-confirmation@${appOrigin.replace(/^https?:\/\//, '')}>`;
   const { subject, html, text } = await buildBookingEmail(record);
 
   await resend.emails.send({
@@ -201,9 +205,10 @@ const sendBookingCancellationEmail = async (record, force = false) => {
     return;
   }
 
+  const appOrigin = getAppOrigin();
   const from =
     process.env.RESEND_CANCEL_FROM_EMAIL ||
-    "Wanderlust Private Limited <booking-cancel@wanderlust.kawserahmed.tech>";
+    `Wanderlust Private Limited <booking-cancel@${appOrigin.replace(/^https?:\/\//, '')}>`;
   const { subject, html, text } = await buildCancellationEmail(record);
 
   await resend.emails.send({

@@ -130,7 +130,7 @@ router.post(
 			return res.status(500).json({ error: err.message || "Exchange rate error" });
 		}
 
-		const baseUrl = `${req.protocol}://${req.get("host")}`;
+		const baseUrl = (process.env.BASEURL || process.env.APP_ORIGIN || `${req.protocol}://${req.get("host")}`).replace(/\/$/, "");
 		// include session_id to guarantee DB persistence on return even if webhook delivery fails
 		const success_url = `${baseUrl}/cart/success?session_id={CHECKOUT_SESSION_ID}`;
 		const cancel_url = `${baseUrl}/cart/cancel`;
