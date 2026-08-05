@@ -9,7 +9,7 @@ window.cloudinaryDirectUpload = (() => {
     return res.json();
   }
 
-  async function uploadToCloudinary(file) {
+  async function uploadToCloudinary(file, onProgress) {
     const sign = await signUpload();
     const formData = new FormData();
     formData.append('file', file);
@@ -19,20 +19,33 @@ window.cloudinaryDirectUpload = (() => {
     formData.append('folder', sign.folder || 'wanderlust_DEV');
     const uploadUrl = `https://api.cloudinary.com/v1_1/${sign.cloudName}/auto/upload`;
 
-    const response = await fetch(uploadUrl, {
-      method: 'POST',
-      body: formData,
-    });
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', uploadUrl);
+      xhr.responseType = 'json';
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Cloudinary upload failed: ${text}`);
-    }
-    const payload = await response.json();
-    return {
-      url: payload.secure_url || payload.url,
-      filename: payload.public_id,
-    };
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable && typeof onProgress === 'function') {
+          onProgress(event.loaded / event.total);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          const payload = xhr.response;
+          resolve({
+            url: payload.secure_url || payload.url,
+            filename: payload.public_id,
+          });
+          return;
+        }
+        const text = xhr.responseText || 'Unknown error';
+        reject(new Error(`Cloudinary upload failed: ${text}`));
+      };
+
+      xhr.onerror = () => reject(new Error('Cloudinary upload failed due to a network error.'));
+      xhr.send(formData);
+    });
   }
 
   function addHiddenField(form, name, value) {
@@ -74,7 +87,7 @@ window.cloudinaryDirectUpload = (() => {
     addHiddenField(form, 'profile[image][filename]', image.filename);
   }
 
-  async function uploadListingFiles(fileInput, form, onUploadComplete) {
+  async function uploadListingFiles(fileInput, form, onUploadComplete, onUploadProgress) {
     const files = Array.from(fileInput.files || []).slice(0, 3);
     if (!files.length) {
       return;
@@ -82,8 +95,12 @@ window.cloudinaryDirectUpload = (() => {
     directUploadPending = true;
     try {
       const uploaded = [];
-      for (const file of files) {
-        const uploadedImage = await uploadToCloudinary(file);
+      for (const [index, file] of files.entries()) {
+        const uploadedImage = await uploadToCloudinary(file, (progress) => {
+          if (typeof onUploadProgress === 'function') {
+            onUploadProgress({ index: index + 1, total: files.length, progress, name: file.name });
+          }
+        });
         uploaded.push(uploadedImage);
       }
       setListingMetadata(form, uploaded);
@@ -150,11 +167,21 @@ window.cloudinaryDirectUpload = (() => {
   }
 
   return {
-    initListingUploader: ({ formId, fileInputId, onUploadComplete }) => {
+    initListingUploader: ({ formId, fileInputId, onUploadComplete, onUploadProgress, onUploadError }) => {
       const form = document.getElementById(formId);
       const fileInput = document.getElementById(fileInputId);
       if (!form || !fileInput) return;
-      fileInput.addEventListener('change', () => uploadListingFiles(fileInput, form, onUploadComplete));
+      fileInput.addEventListener('change', async () => {
+        try {
+          await uploadListingFiles(fileInput, form, onUploadComplete, onUploadProgress);
+        } catch (error) {
+          if (typeof onUploadError === 'function') {
+            onUploadError(error);
+          } else {
+            console.error(error);
+          }
+        }
+      });
       attachListingFormSubmit(form, fileInput);
     },
     initProfileUploader: ({ formId, fileInputId, onUploadComplete }) => {

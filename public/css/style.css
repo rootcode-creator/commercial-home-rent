@@ -2466,6 +2466,36 @@ body {
   border-left-color: #dc2626;
 }
 
+.upload-progress-wrapper {
+  margin-top: 0.5rem;
+  gap: 0.35rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.upload-progress-bar {
+  width: 100%;
+  min-height: 0.75rem;
+  border-radius: 999px;
+  background: #e5e7eb;
+  overflow: hidden;
+  border: 1px solid #d1d5db;
+}
+
+.upload-progress-fill {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, #0ea5e9, #38bdf8);
+  transition: width 0.2s ease;
+}
+
+.upload-progress-wrapper span {
+  display: block;
+  font-size: 0.8rem;
+  color: #475569;
+}
+
 /* Host Section */
 .host-section {
   margin-top: 2.5rem;

@@ -35,6 +35,14 @@
                             <div class="file-input-wrapper">
                                 <input type="file" id="images" name="listing[images]" class="form-control" accept="image/*" multiple required>
                             </div>
+                            <div class="image-upload-status">
+                                <div class="upload-progress-wrapper d-none" id="uploadProgressWrapper">
+                                    <div class="upload-progress-bar" aria-hidden="true">
+                                        <div class="upload-progress-fill" id="uploadProgressFill" style="width: 0%;"></div>
+                                    </div>
+                                    <span id="uploadProgressLabel" class="small text-muted">Upload progress will appear here.</span>
+                                </div>
+                            </div>
                             <small id="imagesHelp" class="form-text text-muted d-none">Upload up to 3 images. The first image becomes the main image.</small>
                             <div class="invalid-feedback">Please select 1 to 3 valid image files.</div>
                         </div>
@@ -88,7 +96,7 @@
                         </div>
 
                         <!-- Submit Button -->
-                        <button type="submit" class="btn btn-dark add-btn w-100">Add Listing</button>
+                        <button type="submit" class="btn btn-dark add-btn w-100" disabled>Add Listing</button>
 
                     </form>
                 </div>
@@ -207,6 +215,34 @@
                 }
             }
 
+            const submitButton = listingForm.querySelector('button[type="submit"].add-btn');
+            const uploadProgressWrapper = document.getElementById('uploadProgressWrapper');
+            const uploadProgressFill = document.getElementById('uploadProgressFill');
+            const uploadProgressLabel = document.getElementById('uploadProgressLabel');
+            let uploadInProgress = false;
+            let uploadedImages = false;
+
+            function setUploadState({ uploading, progress = 0, message, statusClass }) {
+                uploadInProgress = uploading;
+                if (uploading) {
+                    uploadProgressWrapper.classList.remove('d-none');
+                    uploadProgressFill.style.width = `${Math.round(progress * 100)}%`;
+                    uploadProgressLabel.textContent = message || `Uploading (${Math.round(progress * 100)}%)`;
+                    uploadProgressLabel.className = 'small text-info';
+                } else {
+                    uploadProgressFill.style.width = `${Math.round(progress * 100)}%`;
+                    uploadProgressLabel.textContent = message || 'Upload complete.';
+                    uploadProgressLabel.className = `small ${statusClass || 'text-success'}`;
+                }
+                updateSubmitState();
+            }
+
+            function updateSubmitState() {
+                if (submitButton) {
+                    submitButton.disabled = uploadInProgress || !uploadedImages;
+                }
+            }
+
             // Event listeners for image input — append files instead of replacing
             imageInput.addEventListener('change', function (e) {
                 const picked = Array.from(e.target.files || []);
@@ -216,20 +252,37 @@
                 }
                 // write back to control so form submit includes accumulated files
                 imageInput.files = dtImages.files;
+                uploadedImages = false;
+                setUploadState({ uploading: false, progress: 0, message: 'Waiting for upload to start...', statusClass: 'text-muted' });
                 updatePreview();
             });
+
+            function setUploadError(message) {
+                setUploadState({ uploading: false, progress: 0, message, statusClass: 'text-danger' });
+                imageStatus.textContent = message;
+                imageStatus.className = 'text-danger small';
+            }
 
             // Form validation with enhanced checks
             listingForm.addEventListener('submit', function(event) {
                 let isValid = true;
 
-                // Validate uploaded images
+                if (uploadInProgress) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    imageStatus.textContent = 'Please wait for the image upload to finish before submitting.';
+                    imageStatus.className = 'text-info small';
+                    return false;
+                }
+
                 const files = Array.from(imageInput.files || []).slice(0, 3);
-                if (!files.length) {
+                if (!files.length || !uploadedImages) {
                     event.preventDefault();
                     event.stopPropagation();
                     imageInput.classList.add('is-invalid');
                     if (imagesHelp) { imagesHelp.classList.remove('d-none'); imagesHelp.classList.add('text-danger'); }
+                    imageStatus.textContent = 'Please select and upload at least one image before adding your listing.';
+                    imageStatus.className = 'text-danger small';
                     isValid = false;
                 } else if (files.some((file) => !isValidImageFile(file))) {
                     event.preventDefault();
@@ -264,6 +317,23 @@
                 cloudinaryDirectUpload.initListingUploader({
                   formId: 'listingForm',
                   fileInputId: 'images',
+                  onUploadProgress: ({ progress, index, total, name }) => {
+                    setUploadState({
+                      uploading: true,
+                      progress,
+                      message: `Uploading ${index}/${total}: ${name} (${Math.round(progress * 100)}%)`,
+                    });
+                  },
+                  onUploadComplete: () => {
+                    uploadedImages = true;
+                    setUploadState({ uploading: false, progress: 1, message: 'Images uploaded successfully.', statusClass: 'text-success' });
+                    imageStatus.textContent = 'All selected images have been uploaded.';
+                    imageStatus.className = 'text-success small';
+                  },
+                  onUploadError: (error) => {
+                    setUploadError('Image upload failed. Please try again.');
+                    console.error(error);
+                  }
                 });
                 // Keep textarea scrollable; min-length validated on submit (100 chars)
             });
