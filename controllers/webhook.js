@@ -226,11 +226,11 @@ const buildCancellationEmail = async (record) => {
   const total = (Number(totalValue) || 0).toFixed(2);
   const canceledAt = new Date().toLocaleString();
   const bookingId = record.sessionId || record.paymentIntentId || "";
-  const appOrigin = getEmailOrigin();
+  const appOrigin = getAppOrigin();
   const listingsUrl = appOrigin ? `${appOrigin}/listings` : "/listings";
   const supportEmail =
     process.env.SUPPORT_EMAIL ||
-    `booking-cancel@${appOrigin.replace(/^https?:\/\//, '')}`;
+    `booking-cancel@${parseHostname(getEmailOrigin())}`;
   const logoUrl = process.env.LOGO_URL || "https://your-cdn.example/logo.png";
 
   const subject = `Booking canceled: ${listingTitle}`;
