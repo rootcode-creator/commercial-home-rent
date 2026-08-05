@@ -858,8 +858,12 @@ module.exports.generateReceiptPdf = async (req, res) => {
 
 module.exports.createListing = async (req, res, next) => {
   
+  const createGeocodeQuery = req.body.listing.country
+    ? `${req.body.listing.location}, ${req.body.listing.country}`
+    : req.body.listing.location;
+
   let response = await geocodingClient.forwardGeocode({
-    query: req.body.listing.location,
+    query: createGeocodeQuery,
     limit: 1,
   })
     .send();
