@@ -69,7 +69,7 @@ const getBookingRange = (record) => {
   };
 };
 
-const getAppOrigin = () => (process.env.BASEURL || process.env.APP_ORIGIN || "").replace(/\/$/, "");
+const getEmailOrigin = () => (process.env.EMAIL_URL || process.env.BASEURL || process.env.APP_ORIGIN || "").replace(/\/$/, "");
 
 const buildBookingEmail = async (record) => {
   const listingTitle = record.listingTitle || "Booked listing";
@@ -82,7 +82,7 @@ const buildBookingEmail = async (record) => {
   const subtotal = total; // no itemized breakdown available here
   const tax = "0.00";
   const paymentMethod = Array.isArray(record.paymentMethodTypes) && record.paymentMethodTypes.length > 0 ? record.paymentMethodTypes[0] : "card";
-  const appOrigin = getAppOrigin();
+  const appOrigin = getEmailOrigin();
   const bookingUrl = appOrigin ? `${appOrigin}/listings/reservations` : '/listings/reservations';
   const supportEmail =
     process.env.SUPPORT_EMAIL ||
@@ -125,7 +125,7 @@ const buildCancellationEmail = async (record) => {
   const total = (Number(totalValue) || 0).toFixed(2);
   const canceledAt = new Date().toLocaleString();
   const bookingId = record.sessionId || record.paymentIntentId || "";
-  const appOrigin = getAppOrigin();
+  const appOrigin = getEmailOrigin();
   const supportEmail =
     process.env.SUPPORT_EMAIL ||
     `booking-cancel@${appOrigin.replace(/^https?:\/\//, '')}`;
@@ -170,7 +170,7 @@ const sendBookingEmail = async (record, force = false) => {
     return;
   }
 
-  const appOrigin = getAppOrigin();
+  const appOrigin = getEmailOrigin();
   const from =
     process.env.RESEND_FROM_EMAIL ||
     `Wanderlust Private Limited <booking-confirmation@${appOrigin.replace(/^https?:\/\//, '')}>`;
@@ -205,7 +205,7 @@ const sendBookingCancellationEmail = async (record, force = false) => {
     return;
   }
 
-  const appOrigin = getAppOrigin();
+  const appOrigin = getEmailOrigin();
   const from =
     process.env.RESEND_CANCEL_FROM_EMAIL ||
     `Wanderlust Private Limited <booking-cancel@${appOrigin.replace(/^https?:\/\//, '')}>`;
