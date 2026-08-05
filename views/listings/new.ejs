@@ -261,6 +261,10 @@
             // Initialize preview on page load
             window.addEventListener('load', function () {
                 updatePreview();
+                cloudinaryDirectUpload.initListingUploader({
+                  formId: 'listingForm',
+                  fileInputId: 'images',
+                });
                 // Keep textarea scrollable; min-length validated on submit (100 chars)
             });
         </script>

@@ -28,6 +28,7 @@ const cartRouter = require("./routes/cart.js");
 const reviewRouter = require("./routes/review.js");
 const userRouter = require("./routes/user.js");
 const paymentRouter = require("./routes/payment.js");
+const cloudinaryRouter = require("./routes/cloudinary.js");
 const cartController = require("./controllers/cart.js");
 
 
@@ -88,6 +89,7 @@ app.post("/webhooks/stripe", express.raw({ type: "application/json" }), handleSt
 app.use(express.json());
 app.use(methodOverride("_method"));
 app.engine('ejs', ejsMate);
+app.use("/cloudinary", cloudinaryRouter);
 app.use(express.static(path.join(__dirname, "/public")));
 app.get("/favicon.ico", (req, res) => {
   res.type("image/x-icon");

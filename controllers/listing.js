@@ -875,8 +875,18 @@ module.exports.createListing = async (req, res, next) => {
   let newListing = new Listing(req.body.listing);
   newListing.owner = req.user._id;
   
-  // Handle up to 3 uploaded files from the shared uploader
-  if (req.files && req.files['listing[images]'] && req.files['listing[images]'].length > 0) {
+  if (req.body.listing && req.body.listing.image && typeof req.body.listing.image === 'object' && req.body.listing.image.url) {
+    newListing.image = {
+      url: req.body.listing.image.url,
+      filename: req.body.listing.image.filename || req.body.listing.image.url,
+    };
+    if (Array.isArray(req.body.listing.images)) {
+      newListing.images = req.body.listing.images.slice(0, 2).map((img) => ({
+        url: img.url,
+        filename: img.filename || img.url,
+      }));
+    }
+  } else if (req.files && req.files['listing[images]'] && req.files['listing[images]'].length > 0) {
     const uploadedImages = req.files['listing[images]'].slice(0, 3);
     newListing.image = {
       url: uploadedImages[0].path,
@@ -941,24 +951,28 @@ module.exports.updateListing = async (req, res) => {
   let { id } = req.params;
   let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing }, { new: true });
 
-  // Handle primary image update
-  // If update request included files under the shared `listing[images]` uploader,
-  // treat them like the create flow: first file becomes `image`, remaining become `images`.
-  if (req.files && req.files['listing[images]'] && req.files['listing[images]'].length > 0) {
+  if (req.body.listing && req.body.listing.image && typeof req.body.listing.image === 'object' && req.body.listing.image.url) {
+    listing.image = {
+      url: req.body.listing.image.url,
+      filename: req.body.listing.image.filename || req.body.listing.image.url,
+    };
+    if (Array.isArray(req.body.listing.images)) {
+      listing.images = req.body.listing.images.slice(0, 2).map((img) => ({
+        url: img.url,
+        filename: img.filename || img.url,
+      }));
+    }
+  } else if (req.files && req.files['listing[images]'] && req.files['listing[images]'].length > 0) {
     const uploadedImages = req.files['listing[images]'].slice(0, 3);
-    // Replace primary image with first uploaded file
     listing.image = {
       url: uploadedImages[0].path,
       filename: uploadedImages[0].filename
     };
-    // Replace additional images with the rest (may be empty)
     listing.images = uploadedImages.slice(1).map(file => ({
       url: file.path,
       filename: file.filename
     }));
   } else if (req.files && req.files['listing[image]'] && req.files['listing[image]'].length > 0) {
-    // Backwards-compatible: if client sent the older single `listing[image]` field,
-    // replace only the primary image and leave `listing.images` unchanged.
     const primaryImage = req.files['listing[image]'][0];
     listing.image = {
       url: primaryImage.path,

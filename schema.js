@@ -19,8 +19,22 @@ module.exports.listingSchema = Joi.object({
                 "boats"
             )
             .required(),
-        image: Joi.string().allow("", null),
-    }).required(),
+        image: Joi.alternatives()
+          .try(
+            Joi.string().allow("", null),
+            Joi.object({
+              url: Joi.string().uri().required(),
+              filename: Joi.string().required(),
+            })
+          )
+          .optional(),
+        images: Joi.array().items(
+          Joi.object({
+            url: Joi.string().uri().required(),
+            filename: Joi.string().required(),
+          })
+        ).optional(),
+    }).unknown(true).required(),
 
 });
 

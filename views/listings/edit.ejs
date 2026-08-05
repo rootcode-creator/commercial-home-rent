@@ -431,7 +431,13 @@
                 this.classList.add('was-validated');
             }, false);
 
-            window.addEventListener('load', updatePreview);
-            window.addEventListener('load', initializeAmenityPicker);
+            window.addEventListener('load', function () {
+                updatePreview();
+                cloudinaryDirectUpload.initListingUploader({
+                  formId: 'listingForm',
+                  fileInputId: 'images',
+                });
+                initializeAmenityPicker();
+            });
         </script>
     </body>
