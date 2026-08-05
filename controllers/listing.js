@@ -949,7 +949,34 @@ module.exports.renderEditForm = async (req, res) => {
 
 module.exports.updateListing = async (req, res) => {
   let { id } = req.params;
-  let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing }, { new: true });
+  let listing = await Listing.findById(id);
+  if (!listing) {
+    req.flash('error', 'Listing not found.');
+    return res.redirect('/listings');
+  }
+
+  const previousLocation = String(listing.location || '').trim();
+  const previousCountry = String(listing.country || '').trim();
+  listing.set(req.body.listing);
+
+  const requestedLocation = String(req.body.listing.location || '').trim();
+  const requestedCountry = String(req.body.listing.country || '').trim();
+  const shouldRecalculateGeometry = requestedLocation &&
+    (requestedLocation !== previousLocation || requestedCountry !== previousCountry || !listing.geometry?.coordinates?.length);
+
+  if (shouldRecalculateGeometry) {
+    const geocodeQuery = requestedCountry ? `${requestedLocation}, ${requestedCountry}` : requestedLocation;
+    const response = await geocodingClient.forwardGeocode({
+      query: geocodeQuery,
+      limit: 1,
+    }).send();
+    const geometry = response.body && response.body.features && response.body.features[0]
+      ? response.body.features[0].geometry
+      : null;
+    if (geometry) {
+      listing.geometry = geometry;
+    }
+  }
 
   if (req.body.listing && req.body.listing.image && typeof req.body.listing.image === 'object' && req.body.listing.image.url) {
     listing.image = {
