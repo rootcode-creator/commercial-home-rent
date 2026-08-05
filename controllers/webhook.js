@@ -69,7 +69,7 @@ const getBookingRange = (record) => {
   };
 };
 
-const getAppOrigin = () => (process.env.BASEURL || process.env.APP_ORIGIN || process.env.EMAIL_URL || "").replace(/\/$/, "");
+const getAppOrigin = () => (process.env.BASEURL || process.env.APP_ORIGIN || "").replace(/\/$/, "");
 const getEmailOrigin = () => (process.env.EMAIL_URL || process.env.BASEURL || process.env.APP_ORIGIN || "").replace(/\/$/, "");
 
 const parseHostname = (origin) => {
