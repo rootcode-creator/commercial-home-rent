@@ -2451,6 +2451,11 @@ body {
   border-left-color: #d1d5db;
 }
 
+.preview-status .text-primary {
+  color: #0d6efd;
+  border-left-color: #0d6efd;
+}
+
 .preview-status .text-info {
   color: #0ea5e9;
   border-left-color: #0ea5e9;
@@ -2464,6 +2469,19 @@ body {
 .preview-status .text-danger {
   color: #dc2626;
   border-left-color: #dc2626;
+}
+
+button.upload-disabled,
+button.upload-disabled:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Use contain so preview images preserve original aspect ratio without distortion */
+.preview-main img,
+.preview-side img {
+  object-fit: contain;
 }
 
 /* Host Section */
