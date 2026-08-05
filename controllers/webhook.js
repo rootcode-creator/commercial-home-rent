@@ -71,6 +71,55 @@ const getBookingRange = (record) => {
 
 const getEmailOrigin = () => (process.env.EMAIL_URL || process.env.BASEURL || process.env.APP_ORIGIN || "").replace(/\/$/, "");
 
+const parseHostname = (origin) => {
+  if (!origin) {
+    return "";
+  }
+  try {
+    return new URL(origin).hostname;
+  } catch (err) {
+    return String(origin).replace(/^https?:\/\//, "").replace(/\/.*$/, "");
+  }
+};
+
+const getResendFromAddress = (envValue, appOrigin, fallbackLocalPart) => {
+  if (envValue && String(envValue).trim()) {
+    return String(envValue).trim();
+  }
+  const host = parseHostname(appOrigin);
+  if (!host) {
+    throw new Error(
+      `Cannot determine sender address for ${fallbackLocalPart}. Set RESEND_FROM_EMAIL or EMAIL_URL/BASEURL/APP_ORIGIN.`
+    );
+  }
+  return `Wanderlust Private Limited <${fallbackLocalPart}@${host}>`;
+};
+
+const findListingOwner = async (record) => {
+  if (!record?.listingId) {
+    return null;
+  }
+
+  try {
+    const listing = await Listing.findById(record.listingId)
+      .select("title owner")
+      .populate("owner", "email displayName")
+      .lean();
+    if (!listing || !listing.owner || !listing.owner.email) {
+      return null;
+    }
+
+    return {
+      ownerEmail: String(listing.owner.email).trim(),
+      ownerName: listing.owner.displayName || "",
+      listingTitle: listing.title || record.listingTitle || "",
+    };
+  } catch (err) {
+    console.error("Error finding listing owner for booking notification:", err);
+    return null;
+  }
+};
+
 const buildBookingEmail = async (record) => {
   const listingTitle = record.listingTitle || "Booked listing";
   const { bookingDays, bookingStartText, bookingEndText } = getBookingRange(record);
@@ -117,6 +166,57 @@ const buildBookingEmail = async (record) => {
   return { subject, html, text };
 };
 
+const buildOwnerBookingEmail = async (record, ownerInfo = {}) => {
+  const listingTitle = record.listingTitle || ownerInfo.listingTitle || "Your listing";
+  const { bookingDays, bookingStartText, bookingEndText } = getBookingRange(record);
+  const currency = record.originalCurrency || record.localCurrency || record.currency || "USD";
+  const totalValue = record.originalAmountTotal ?? record.localAmountTotal ?? record.amountTotal ?? 0;
+  const total = (Number(totalValue) || 0).toFixed(2);
+  const reservedAt = record.reservationDate ? new Date(record.reservationDate).toLocaleString() : "";
+  const bookingId = record.sessionId || record.paymentIntentId || "";
+  const appOrigin = getEmailOrigin();
+  const ordersUrl = record.listingId
+    ? appOrigin
+      ? `${appOrigin}/listings/mylistings/${record.listingId}/orders`
+      : `/listings/mylistings/${record.listingId}/orders`
+    : appOrigin
+    ? `${appOrigin}/listings/mylistings`
+    : "/listings/mylistings";
+  const supportEmail =
+    process.env.SUPPORT_EMAIL ||
+    `booking-confirmation@${parseHostname(appOrigin)}`;
+  const logoUrl = process.env.LOGO_URL || "https://your-cdn.example/logo.png";
+  const ownerName = ownerInfo.ownerName || "Host";
+  const guestName = record.customerName || "Guest";
+  const guestEmail = record.customerEmail || "";
+
+  const subject = `New booking received: ${listingTitle}`;
+
+  const templatePath = path.join(__dirname, "..", "views", "emails", "bookingownernotification.ejs");
+  const html = await ejs.renderFile(templatePath, {
+    ownerName,
+    guestName,
+    guestEmail,
+    listingTitle,
+    listingLocation: record.listingLocation || "",
+    listingCountry: record.listingCountry || "",
+    bookingDays,
+    currency,
+    total,
+    reservationDate: reservedAt,
+    bookingStartDate: bookingStartText,
+    bookingEndDate: bookingEndText,
+    bookingId,
+    ordersUrl,
+    supportEmail,
+    logoUrl,
+  });
+
+  const text = `New booking received for ${listingTitle} (Booking #${bookingId})\n\nHello ${ownerName},\n\nA guest has confirmed a new booking for your listing.\n\nGuest: ${guestName}${guestEmail ? ` <${guestEmail}>` : ""}\nLocation: ${record.listingLocation || ""}${record.listingCountry ? ", " + record.listingCountry : ""}\nBooking dates: ${bookingStartText}${bookingEndText ? " to " + bookingEndText : ""}\nNights: ${bookingDays}\nReservation date: ${reservedAt}\nTotal paid: ${currency} ${total}\n\nView the order: ${ordersUrl}\n\nIf you have questions, contact ${supportEmail}.\n\nThanks,\nWanderlust Private Limited`;
+
+  return { subject, html, text };
+};
+
 const buildCancellationEmail = async (record) => {
   const listingTitle = record.listingTitle || "Booked listing";
   const { bookingDays, bookingStartText, bookingEndText } = getBookingRange(record);
@@ -156,59 +256,90 @@ const buildCancellationEmail = async (record) => {
 };
 
 const sendBookingEmail = async (record, force = false) => {
-  if (!record || (record.emailSentAt && !force)) {
+  if (!record) {
     return;
   }
 
   const resend = getResend();
   if (!resend) {
-    return;
-  }
-
-  const to = record.customerEmail;
-  if (!to) {
-    return;
+    throw new Error("Missing Resend API key for booking emails");
   }
 
   const appOrigin = getEmailOrigin();
-  const from =
-    process.env.RESEND_FROM_EMAIL ||
-    `Wanderlust Private Limited <booking-confirmation@${appOrigin.replace(/^https?:\/\//, '')}>`;
-  const { subject, html, text } = await buildBookingEmail(record);
-
-  await resend.emails.send({
-    from,
-    to: [to],
-    subject,
-    html,
-    text,
-  });
-
-  await PaymentRecord.updateOne(
-    { sessionId: record.sessionId },
-    { $set: { emailSentAt: new Date(), emailSentTo: to } }
+  const fromCustomer = getResendFromAddress(
+    process.env.RESEND_FROM_EMAIL,
+    appOrigin,
+    "booking-confirmation"
   );
+  const fromOwner = getResendFromAddress(
+    process.env.RESEND_OWNER_FROM_EMAIL || process.env.RESEND_FROM_EMAIL,
+    appOrigin,
+    "booking-owner"
+  );
+
+  const ownerInfo = await findListingOwner(record);
+  const customerEmail = record.customerEmail ? String(record.customerEmail).trim() : null;
+  const ownerEmail = ownerInfo?.ownerEmail ? String(ownerInfo.ownerEmail).trim() : null;
+
+  const shouldSendCustomer = customerEmail && (!record.emailSentAt || force);
+  const shouldSendOwner = ownerEmail && (!record.ownerEmailSentAt || force) && ownerEmail !== customerEmail;
+
+  if (!shouldSendCustomer && !shouldSendOwner) {
+    return;
+  }
+
+  if (shouldSendCustomer) {
+    const { subject, html, text } = await buildBookingEmail(record);
+    await resend.emails.send({
+      from: fromCustomer,
+      to: [customerEmail],
+      subject,
+      html,
+      text,
+    });
+    await PaymentRecord.updateOne(
+      { sessionId: record.sessionId },
+      { $set: { emailSentAt: new Date(), emailSentTo: customerEmail } }
+    );
+  }
+
+  if (shouldSendOwner) {
+    const { subject, html, text } = await buildOwnerBookingEmail(record, ownerInfo);
+    await resend.emails.send({
+      from: fromOwner,
+      to: [ownerEmail],
+      subject,
+      html,
+      text,
+    });
+    await PaymentRecord.updateOne(
+      { sessionId: record.sessionId },
+      { $set: { ownerEmailSentAt: new Date(), ownerEmailSentTo: ownerEmail } }
+    );
+  }
 };
 
 const sendBookingCancellationEmail = async (record, force = false) => {
-  if (!record || (record.cancellationEmailSentAt && !force)) {
+  if (!record) {
     return;
   }
 
   const resend = getResend();
   if (!resend) {
-    return;
+    throw new Error("Missing Resend API key for cancellation emails");
   }
 
-  const to = record.customerEmail;
+  const to = record.customerEmail ? String(record.customerEmail).trim() : null;
   if (!to) {
-    return;
+    throw new Error("No customer email available for booking cancellation notification");
   }
 
   const appOrigin = getEmailOrigin();
-  const from =
-    process.env.RESEND_CANCEL_FROM_EMAIL ||
-    `Wanderlust Private Limited <booking-cancel@${appOrigin.replace(/^https?:\/\//, '')}>`;
+  const from = getResendFromAddress(
+    process.env.RESEND_CANCEL_FROM_EMAIL || process.env.RESEND_FROM_EMAIL,
+    appOrigin,
+    "booking-cancel"
+  );
   const { subject, html, text } = await buildCancellationEmail(record);
 
   await resend.emails.send({

@@ -109,6 +109,13 @@ const paymentRecordSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    ownerEmailSentAt: {
+      type: Date,
+    },
+    ownerEmailSentTo: {
+      type: String,
+      trim: true,
+    },
   },
   { timestamps: true }
 );
