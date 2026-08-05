@@ -49,27 +49,6 @@ window.cloudinaryDirectUpload = (() => {
     inputs.forEach((input) => input.remove());
   }
 
-  function getUploadStatusElement(form) {
-    return form.querySelector('.upload-status');
-  }
-
-  function updateStatus(form, message, statusClass = 'text-muted') {
-    const statusEl = getUploadStatusElement(form);
-    if (!statusEl) return;
-    statusEl.textContent = message;
-    statusEl.className = `upload-status small ${statusClass}`;
-  }
-
-  function setButtonState(button, enabled) {
-    if (!button) return;
-    button.disabled = !enabled;
-    if (enabled) {
-      button.classList.remove('upload-disabled');
-    } else {
-      button.classList.add('upload-disabled');
-    }
-  }
-
   function setListingMetadata(form, uploadedImages) {
     clearMetadataFields(form, 'listing[image]');
     clearMetadataFields(form, 'listing[images]');
@@ -97,20 +76,10 @@ window.cloudinaryDirectUpload = (() => {
 
   async function uploadListingFiles(fileInput, form, onUploadComplete) {
     const files = Array.from(fileInput.files || []).slice(0, 3);
-    const submitButton = form.querySelector('button[type="submit"]');
-    const hasFiles = files.length > 0;
-    const hasMetadata = form.querySelector('input[name="listing[image][url]"]');
-
     if (!files.length) {
-      updateStatus(form, 'No images selected.', 'text-muted');
-      setButtonState(submitButton, !hasFiles || Boolean(hasMetadata));
       return;
     }
-
     directUploadPending = true;
-    setButtonState(submitButton, false);
-    updateStatus(form, `Uploading ${files.length} image${files.length > 1 ? 's' : ''}...`, 'text-primary');
-
     try {
       const uploaded = [];
       for (const file of files) {
@@ -124,30 +93,17 @@ window.cloudinaryDirectUpload = (() => {
       if (fileInput.name) {
         fileInput.removeAttribute('name');
       }
-      updateStatus(form, 'Upload complete. You can now submit the listing.', 'text-success');
-    } catch (error) {
-      console.error(error);
-      updateStatus(form, 'Upload failed. Please reselect images and try again.', 'text-danger');
     } finally {
       directUploadPending = false;
-      const hasMetadataAfter = form.querySelector('input[name="listing[image][url]"]');
-      setButtonState(submitButton, Boolean(hasMetadataAfter) || !hasFiles);
     }
   }
 
   async function uploadProfileFile(fileInput, form, onUploadComplete) {
     const file = fileInput.files?.[0];
-    const submitButton = form.querySelector('button[type="submit"]');
     if (!file) {
-      updateStatus(form, 'No profile image selected.', 'text-muted');
-      setButtonState(submitButton, true);
       return;
     }
-
     directUploadPending = true;
-    setButtonState(submitButton, false);
-    updateStatus(form, 'Uploading profile image...', 'text-primary');
-
     try {
       const uploadedImage = await uploadToCloudinary(file);
       setProfileMetadata(form, uploadedImage);
@@ -157,14 +113,8 @@ window.cloudinaryDirectUpload = (() => {
       if (fileInput.name) {
         fileInput.removeAttribute('name');
       }
-      updateStatus(form, 'Profile image uploaded.', 'text-success');
-    } catch (error) {
-      console.error(error);
-      updateStatus(form, 'Profile upload failed. Please retry.', 'text-danger');
     } finally {
       directUploadPending = false;
-      const hasMetadataAfter = form.querySelector('input[name="profile[image][url]"]');
-      setButtonState(submitButton, Boolean(hasMetadataAfter) || !file);
     }
   }
 
@@ -173,7 +123,7 @@ window.cloudinaryDirectUpload = (() => {
       if (directUploadPending) {
         event.preventDefault();
         event.stopPropagation();
-        updateStatus(form, 'Please wait while image upload finishes.', 'text-danger');
+        alert('Please wait while image upload finishes.');
         return false;
       }
 
@@ -182,11 +132,9 @@ window.cloudinaryDirectUpload = (() => {
       if (hasFiles && !hasMetadata) {
         event.preventDefault();
         event.stopPropagation();
-        updateStatus(form, 'Please wait for the image upload to finish before submitting.', 'text-danger');
+        alert('Please wait for the image upload to finish before submitting.');
         return false;
       }
-
-      return true;
     }, false);
   }
 
@@ -195,10 +143,9 @@ window.cloudinaryDirectUpload = (() => {
       if (directUploadPending) {
         event.preventDefault();
         event.stopPropagation();
-        updateStatus(form, 'Please wait while profile image upload finishes.', 'text-danger');
+        alert('Please wait while profile image upload finishes.');
         return false;
       }
-      return true;
     }, false);
   }
 
