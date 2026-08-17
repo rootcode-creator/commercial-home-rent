@@ -39,7 +39,7 @@ Property listing and rental platform powered by Express.js, MongoDB, EJS, Passpo
 <a id="project-intro"></a>
 ## 🚀 Project intro
 
-`commercial-home-rent` is a compact Express application that implements listings, reviews, and user authentication. It is intended as a learning or MVP foundation for property listing and renting functionality. The application uses server-side templates (EJS) and stores data in MongoDB.
+**Commercial-home-rent** is a full-featured property listing and rental platform built with Node.js, Express, and MongoDB. It empowers users to browse, book, and manage residential properties with integrated payment processing and secure authentication. Additionally, the platform features map integration, comprehensive review systems, multi-currency support, and email notifications for booking.
 
 ### 🎬 Demonstration
 
