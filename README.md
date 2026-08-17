@@ -2,7 +2,7 @@
 
 <img src="house.png" alt="House logo" width="110" style="margin-bottom:12px;" />
 
-## commercial-home-rent
+## Commercial home rent
 
 Property listing and rental platform powered by Express.js, MongoDB, EJS, Passport, and Cloudinary.
 
@@ -39,7 +39,7 @@ Property listing and rental platform powered by Express.js, MongoDB, EJS, Passpo
 <a id="project-intro"></a>
 ## 🚀 Project intro
 
-**Commercial-home-rent** is a full-featured property listing and rental platform built with Node.js, Express, and MongoDB. It empowers users to browse, book, and manage residential properties with integrated payment processing and secure authentication. Additionally, the platform features map integration, comprehensive review systems, multi-currency support, and email notifications for booking.
+`Commercial-home-rent` is a full-featured property listing and rental platform built with Node.js, Express, and MongoDB. It empowers users to browse, book, and manage residential properties with integrated payment processing and secure authentication. Additionally, the platform features map integration, comprehensive review systems, multi-currency support, and email notifications for booking.
 
 ### 🎬 Demonstration
 
