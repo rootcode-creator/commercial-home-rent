@@ -51,7 +51,7 @@ https://www.youtube.com/watch?v=oaWh6L09oFA
 ## 📁 Project structure
 
 ```
-wanderlust-ecommerce-app/
+ecommerce-app/
 ├── models/            # Mongoose models
 ├── routes/            # Express route handlers
 ├── views/             # EJS templates
